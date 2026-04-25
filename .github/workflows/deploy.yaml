@@ -1,0 +1,24 @@
+name: Deploy AUIToDo
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Update Code and Redeploy
+        #execute all commands from project's directory
+        working-directory: /home/homeadmin/subApps/AUIToDo
+        run: |
+          # Pull the latest code from the main branch
+          git fetch origin
+          git reset --hard origin/prod
+
+          # destroy the current version of AUIToDo without wiping the DB
+          docker compose down
+
+          # re-compose the site
+          docker compose up -d --build
