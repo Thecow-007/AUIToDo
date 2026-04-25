@@ -1,35 +1,72 @@
 <div class="chat-container">
   <div class="chat-header">
     <span class="chat-title">✨ AI Assistant</span>
+    <button class="settings-btn" (click)="speechService.isSettingsOpen.set(true)" title="Voice Settings">⚙️</button>
   </div>
 
   <div class="message-history">
-    <div class="message ai-message">
-      <div class="avatar ai-avatar">✨</div>
-      <div class="message-body">
-        <div class="content">Hello! How can I help you manage your tasks today? I noticed "Clean Garage" is due tomorrow.</div>
-        <span class="timestamp">12:01 PM</span>
-      </div>
-    </div>
-    <div class="message user-message">
-      <div class="message-body">
-        <div class="content">Can you push the due date to this weekend?</div>
-        <span class="timestamp">12:02 PM</span>
-      </div>
-      <div class="avatar user-avatar">U</div>
-    </div>
-    <div class="message ai-message">
-      <div class="avatar ai-avatar">✨</div>
-      <div class="message-body">
-        <div class="content">Done! I've moved "Clean Garage" to Saturday at 10:00 AM. Want me to adjust any sub-tasks too?</div>
-        <span class="timestamp">12:02 PM</span>
-      </div>
-    </div>
+    @for (msg of messages; track $index) {
+      @if (msg.role === 'ai') {
+        <div class="message ai-message">
+          <div class="avatar ai-avatar">✨</div>
+          <div class="message-body">
+            <div class="content">{{ msg.content }}</div>
+            <div class="message-meta">
+              <span class="timestamp">{{ msg.timestamp }}</span>
+              @if (msg.wasSynthesized) {
+                <span class="tts-indicator" title="Spoken aloud">🔊</span>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="message user-message">
+          <div class="message-body">
+            <div class="content">{{ msg.content }}</div>
+            <div class="message-meta">
+              @if (msg.wasSpoken) {
+                <span class="stt-indicator" title="Voice input">🎤</span>
+              }
+              <span class="timestamp">{{ msg.timestamp }}</span>
+            </div>
+          </div>
+          <div class="avatar user-avatar">U</div>
+        </div>
+      }
+    }
   </div>
+
+  <!-- Transcript overlay -->
+  @if (speechService.isListening()) {
+    <div class="transcript-overlay">
+      <div class="pulse-dot"></div>
+      <span class="transcript-text">{{ speechService.interimTranscript() || 'Listening...' }}</span>
+    </div>
+  }
+
+  <!-- TTS stop bar -->
+  @if (speechService.isSpeaking()) {
+    <div class="tts-speaking-bar">
+      <span>🔊 Speaking...</span>
+      <button class="tts-stop-btn" (click)="stopSpeaking()">⏹ Stop</button>
+    </div>
+  }
   
   <div class="chat-input-area">
-    <button class="voice-toggle" title="Voice Input">🎤</button>
-    <input type="text" placeholder="Ask AI to manage tasks..." />
-    <button class="send-btn">Send</button>
+    <button class="voice-toggle"
+            [class.is-listening]="speechService.isListening()"
+            [class.unsupported]="!speechService.sttSupported"
+            [disabled]="!speechService.sttSupported"
+            (mousedown)="onMicDown()"
+            (mouseup)="onMicUp()"
+            (mouseleave)="onMicUp()"
+            title="{{ speechService.sttSupported ? 'Hold to speak' : 'Speech recognition not supported' }}">
+      🎤
+    </button>
+    <input type="text"
+           placeholder="Ask AI to manage tasks..."
+           [(ngModel)]="inputText"
+           (keydown)="onInputKeydown($event)" />
+    <button class="send-btn" (click)="onSendClick()">Send</button>
   </div>
 </div>
