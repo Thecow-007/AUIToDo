@@ -1,6 +1,7 @@
 import { Component, signal, inject, HostListener, OnInit } from '@angular/core';
 import { NavigationPane } from './components/navigation-pane/navigation-pane';
 import { MainContentPane } from './components/main-content-pane/main-content-pane';
+import { CalendarPage } from './components/calendar-page/calendar-page';
 import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
 import { HeaderBar } from './components/header-bar/header-bar';
 import { TaskModal } from './components/task-modal/task-modal';
@@ -13,10 +14,11 @@ import { SpeechService } from './services/speech.service';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from './services/auth.service';
 import { TaskService } from './services/task.service';
+import { PageService } from './services/page.service';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal, ProfileModal, LoginScreen],
+  imports: [HeaderBar, NavigationPane, MainContentPane, CalendarPage, AiChatBox, TaskModal, VoiceSettingsModal, ProfileModal, LoginScreen],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -26,6 +28,7 @@ export class App implements OnInit {
   speechService = inject(SpeechService);
   profileService = inject(ProfileService);
   auth = inject(AuthService);
+  pageService = inject(PageService);
   private tasks = inject(TaskService);
   protected readonly title = signal('client');
 

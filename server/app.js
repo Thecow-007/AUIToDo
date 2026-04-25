@@ -19,6 +19,10 @@ const aiChatRoutes = require('./routes/aiChat');
 
 const app = express();
 
+// Behind a reverse proxy in prod (TLS terminated upstream). Trust X-Forwarded-Proto
+// so express-session sees req.secure === true and will set Secure cookies.
+app.set('trust proxy', 1);
+
 app.use(express.json({ limit: '1mb' }));
 
 app.use(session({
