@@ -85,7 +85,10 @@
         </div>
       </div>
 
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="delete-btn" (click)="deleteTask()" style="background: transparent; border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s ease;">
+          🗑️ Delete Task
+        </button>
         <button class="primary-btn" (click)="close()">Done</button>
       </div>
     </div>
