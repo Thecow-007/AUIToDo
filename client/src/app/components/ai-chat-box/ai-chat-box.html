@@ -11,18 +11,26 @@
 
   @if (!chatPanel.isCollapsed()) {
     <div class="message-history">
-      @for (msg of messages; track $index) {
+      @for (msg of messages(); track $index) {
         @if (msg.role === 'ai') {
           <div class="message ai-message">
             <div class="avatar ai-avatar">✨</div>
-            <div class="message-body">
-              <div class="content">{{ msg.content }}</div>
+            <div class="message-body ai-body">
+              @if (msg.trail && msg.trail.length > 0) {
+                <div class="search-trail" [class.collapsed]="msg.trailCollapsed">
+                  @for (step of msg.trail; track $index) {
+                    <div class="trail-step">› {{ step.label }}</div>
+                  }
+                </div>
+              }
+              @if (msg.content) {
+                <div class="content">{{ msg.content }}</div>
+              }
               <div class="message-meta">
                 <span class="timestamp">{{ msg.timestamp }}</span>
                 @if (msg.wasSynthesized) {
                   <span class="tts-indicator" title="Spoken aloud">🔊</span>
                 }
-              </div>
             </div>
           </div>
         } @else {
@@ -58,7 +66,7 @@
       <button class="tts-stop-btn" (click)="stopSpeaking()">⏹ Stop</button>
     </div>
   }
-  
+
   <div class="chat-input-area">
     <button class="voice-toggle"
             [class.is-listening]="speechService.isListening()"
@@ -73,6 +81,6 @@
            placeholder="Ask AI to manage tasks..."
            [(ngModel)]="inputText"
            (keydown)="onInputKeydown($event)" />
-    <button class="send-btn" (click)="onSendClick()">Send</button>
+    <button class="send-btn" (click)="onSendClick()" [disabled]="!inputText.trim()">Send</button>
   </div>
 </div>

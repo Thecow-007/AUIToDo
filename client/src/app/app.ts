@@ -1,4 +1,4 @@
-import { Component, signal, inject, HostListener } from '@angular/core';
+import { Component, signal, inject, HostListener, OnInit } from '@angular/core';
 import { NavigationPane } from './components/navigation-pane/navigation-pane';
 import { MainContentPane } from './components/main-content-pane/main-content-pane';
 import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
@@ -6,25 +6,40 @@ import { HeaderBar } from './components/header-bar/header-bar';
 import { TaskModal } from './components/task-modal/task-modal';
 import { VoiceSettingsModal } from './components/voice-settings-modal/voice-settings-modal';
 import { ProfileModal } from './components/profile-modal/profile-modal';
+import { LoginScreen } from './components/login-screen/login-screen';
 import { TaskModalService } from './services/task-modal.service';
 import { ChatPanelService } from './services/chat-panel.service';
 import { SpeechService } from './services/speech.service';
 import { ProfileService } from './services/profile.service';
+import { AuthService } from './services/auth.service';
+import { TaskService } from './services/task.service';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal, ProfileModal],
+  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal, ProfileModal, LoginScreen],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit {
   modalService = inject(TaskModalService);
   chatPanel = inject(ChatPanelService);
   speechService = inject(SpeechService);
   profileService = inject(ProfileService);
+  auth = inject(AuthService);
+  private tasks = inject(TaskService);
   protected readonly title = signal('client');
 
   private isResizing = false;
+
+  ngOnInit() {
+    // Probe session on boot; if logged in, fetch the user's tree + tags.
+    this.auth.refreshMe().subscribe((user) => {
+      if (user) {
+        this.tasks.refresh().subscribe();
+        this.tasks.refreshTags().subscribe();
+      }
+    });
+  }
 
   onResizeStart(event: MouseEvent) {
     event.preventDefault();

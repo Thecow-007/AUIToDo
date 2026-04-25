@@ -1,14 +1,20 @@
 <div class="task-details">
-  <div class="breadcrumb">Home Projects &gt; <span>{{ rootTask.title }}</span></div>
+  <div class="breadcrumb">Home Projects &gt; <span>Root Task</span></div>
   
   <div class="filter-section">
-    <button class="filter-toggle-btn" 
-            [class.active]="isFilterExpanded()"
-            (click)="isFilterExpanded.set(!isFilterExpanded())">
-      <span class="icon">🔍</span>
-      <span>{{ isFilterExpanded() ? 'Hide Filters' : 'Filter Tasks' }}</span>
-      <span class="chevron">{{ isFilterExpanded() ? '▲' : '▼' }}</span>
-    </button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <button class="filter-toggle-btn" 
+              [class.active]="isFilterExpanded()"
+              (click)="toggleFilterPanel()">
+        <span class="icon">🔍</span>
+        <span>{{ isFilterExpanded() ? 'Hide Filters' : 'Filter Tasks' }}</span>
+        <span class="chevron">{{ isFilterExpanded() ? '▲' : '▼' }}</span>
+      </button>
+      
+      <button class="filter-clear" (click)="clearFilters()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.4rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease;">
+        Clear Filters
+      </button>
+    </div>
 
     @if (isFilterExpanded()) {
       <div class="filter-panel glass-panel">
@@ -17,23 +23,23 @@
             <label>Keyword Search</label>
             <input type="text" 
                    class="form-input" 
-                   [(ngModel)]="searchQuery" 
+                   [(ngModel)]="searchQuery"
+                   (ngModelChange)="applyFilters()"
                    placeholder="Search by title or description..." />
           </div>
           
           <div class="filter-group">
             <label>Status</label>
-            <select class="form-input" [(ngModel)]="statusFilter">
+            <select class="form-input" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
               <option value="any">Any Status</option>
-              <option value="To Do">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
+              <option value="To Do">To Do / Active</option>
+              <option value="Done">Done / Completed</option>
             </select>
           </div>
 
           <div class="filter-group">
             <label>Priority</label>
-            <select class="form-input" [(ngModel)]="priorityFilter">
+            <select class="form-input" [(ngModel)]="priorityFilter" (ngModelChange)="applyFilters()">
               <option value="any">Any Priority</option>
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
@@ -41,22 +47,20 @@
               <option value="Urgent">Urgent</option>
             </select>
           </div>
-
-          <div class="filter-group">
-            <label>Energy Level</label>
-            <select class="form-input" [(ngModel)]="energyFilter">
-              <option value="any">Any Energy</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </div>
         </div>
       </div>
     }
   </div>
 
-  <app-task-node [task]="filteredRootTask()" [parentTask]="null" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
+  <div class="task-tree">
+    @for (rootId of taskService.rootTaskIds(); track rootId) {
+      @let root = taskService.getTask(rootId);
+      @if (root) {
+        <app-task-node [task]="root" [isRoot]="true" [depth]="0"></app-task-node>
+      }
+    }
+    @if (taskService.rootTaskIds().length === 0) {
+      <div class="empty-state">No tasks match your filters.</div>
+    }
+  </div>
 </div>
-
-

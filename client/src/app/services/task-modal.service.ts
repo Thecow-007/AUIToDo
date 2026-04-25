@@ -1,17 +1,14 @@
 import { Injectable, signal } from '@angular/core';
-import { Task } from '../models/task.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TaskModalService {
-  selectedTask = signal<Task | null>(null);
+  readonly openTaskId = signal<string | null>(null);
 
-  openModal(task: Task) {
-    this.selectedTask.set(task);
+  open(taskId: string) {
+    this.openTaskId.set(taskId);
   }
 
-  closeModal() {
-    this.selectedTask.set(null);
+  close() {
+    this.openTaskId.set(null);
   }
 }
