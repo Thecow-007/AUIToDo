@@ -27,7 +27,7 @@ export class CalendarPage {
     year: this.today.getFullYear(),
     month: this.today.getMonth(),
   });
-  readonly selectedIso = signal<string | null>(null);
+  readonly modalIso = signal<string | null>(null);
 
   readonly weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -76,31 +76,39 @@ export class CalendarPage {
     return out;
   });
 
-  // Upcoming list: when a day is selected, show that day's tasks; otherwise
-  // future-or-today tasks sorted ascending by dueAt (spec §4 — chronological
-  // upcoming, respecting the active filter; here the active filter is the
-  // selected date).
-  readonly listedTasks = computed<Task[]>(() => {
-    const sel = this.selectedIso();
-    const all = this.taskService.allTasks().filter((t) => t.dueAt);
-    if (sel) {
-      return (this.tasksByDay().get(sel) ?? []).slice().sort(byDueAsc);
-    }
+  // Upcoming list: tasks due in the next 5 days (today + 4), sorted ascending.
+  readonly upcomingTasks = computed<Task[]>(() => {
     const startOfToday = new Date(this.today);
     startOfToday.setHours(0, 0, 0, 0);
-    return all
-      .filter((t) => t.dueAt && t.dueAt.getTime() >= startOfToday.getTime())
+    const end = new Date(startOfToday);
+    end.setDate(end.getDate() + 5);
+
+    return this.taskService
+      .allTasks()
+      .filter(
+        (t) =>
+          t.dueAt &&
+          t.dueAt.getTime() >= startOfToday.getTime() &&
+          t.dueAt.getTime() < end.getTime(),
+      )
       .sort(byDueAsc);
   });
 
-  readonly listHeading = computed(() => {
-    const sel = this.selectedIso();
-    if (!sel) return 'Upcoming';
-    const [y, m, d] = sel.split('-').map(Number);
+  readonly modalTasks = computed<Task[]>(() => {
+    const iso = this.modalIso();
+    if (!iso) return [];
+    return (this.tasksByDay().get(iso) ?? []).slice().sort(byDueAsc);
+  });
+
+  readonly modalHeading = computed(() => {
+    const iso = this.modalIso();
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString(undefined, {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
+      year: 'numeric',
     });
   });
 
@@ -121,25 +129,20 @@ export class CalendarPage {
       year: this.today.getFullYear(),
       month: this.today.getMonth(),
     });
-    this.selectedIso.set(toLocalIso(this.today));
   }
 
   selectDay(cell: CalendarCell) {
-    if (this.selectedIso() === cell.iso) {
-      this.selectedIso.set(null);
-      return;
-    }
-    this.selectedIso.set(cell.iso);
     if (!cell.inMonth) {
       this.viewMonth.set({
         year: cell.date.getFullYear(),
         month: cell.date.getMonth(),
       });
     }
+    this.modalIso.set(cell.iso);
   }
 
-  clearSelection() {
-    this.selectedIso.set(null);
+  closeDayModal() {
+    this.modalIso.set(null);
   }
 
   // Up to 3 dots; the "+N" indicator handles overflow.

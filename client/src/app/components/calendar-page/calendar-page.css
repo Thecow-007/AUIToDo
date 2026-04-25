@@ -1,8 +1,11 @@
 .calendar-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
   gap: var(--spacing-md);
+  /* Host (app-calendar-page) provides overflow-y: auto, so the page just
+     stacks naturally and lets the host scroll. Avoid height: 100% here —
+     it fights with the flex children for space and squeezes the upcoming
+     section to zero on smaller viewports. */
 }
 
 /* Toolbar */
@@ -22,8 +25,7 @@
 }
 
 .cal-nav-btn,
-.cal-today-btn,
-.cal-clear-btn {
+.cal-today-btn {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
@@ -42,16 +44,10 @@
 }
 
 .cal-nav-btn:hover,
-.cal-today-btn:hover,
-.cal-clear-btn:hover {
+.cal-today-btn:hover {
   background: var(--bg-surface-hover);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
-}
-
-.cal-clear-btn {
-  margin-left: auto;
-  color: var(--text-secondary);
 }
 
 /* Month grid */
@@ -118,14 +114,7 @@
   box-shadow: inset 0 0 0 1px var(--accent-primary);
 }
 
-.cal-day.is-selected {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
-}
-
-.cal-day.has-tasks:not(.is-selected) {
+.cal-day.has-tasks {
   background: rgba(59, 130, 246, 0.05);
 }
 
@@ -161,8 +150,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  flex: 1;
-  min-height: 0;
 }
 
 .upcoming-heading {
@@ -181,9 +168,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
 }
 
 .upcoming-row {
@@ -319,4 +303,70 @@
 
 .upcoming-checkbox input:checked ~ .upcoming-checkmark:after {
   display: block;
+}
+
+/* Day-tasks modal */
+.day-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: dayModalFade 0.15s ease;
+}
+
+@keyframes dayModalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.day-modal {
+  width: min(560px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.day-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.day-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.day-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.day-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+.day-modal-body {
+  padding: var(--spacing-md) var(--spacing-lg);
+  overflow-y: auto;
 }

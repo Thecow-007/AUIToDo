@@ -4,9 +4,6 @@
     <h2 class="cal-month-label">{{ monthLabel() }}</h2>
     <button class="cal-nav-btn" (click)="nextMonth()" aria-label="Next month">›</button>
     <button class="cal-today-btn" (click)="goToToday()">Today</button>
-    @if (selectedIso()) {
-      <button class="cal-clear-btn" (click)="clearSelection()">Clear day</button>
-    }
   </div>
 
   <div class="calendar-grid glass-panel">
@@ -22,7 +19,6 @@
           class="cal-day"
           [class.out-of-month]="!cell.inMonth"
           [class.is-today]="cell.isToday"
-          [class.is-selected]="selectedIso() === cell.iso"
           [class.has-tasks]="cell.dueCount > 0"
           (click)="selectDay(cell)"
         >
@@ -43,18 +39,12 @@
   </div>
 
   <div class="upcoming-section">
-    <h3 class="upcoming-heading">{{ listHeading() }}</h3>
-    @if (listedTasks().length === 0) {
-      <div class="upcoming-empty">
-        @if (selectedIso()) {
-          No tasks due on this day.
-        } @else {
-          No upcoming tasks.
-        }
-      </div>
+    <h3 class="upcoming-heading">Upcoming (next 5 days)</h3>
+    @if (upcomingTasks().length === 0) {
+      <div class="upcoming-empty">No tasks due in the next 5 days.</div>
     } @else {
       <ul class="upcoming-list">
-        @for (task of listedTasks(); track task.id) {
+        @for (task of upcomingTasks(); track task.id) {
           <li
             class="upcoming-row glass-panel"
             [ngClass]="'priority-row-' + task.priority"
@@ -87,3 +77,50 @@
     }
   </div>
 </div>
+
+@if (modalIso()) {
+  <div class="day-modal-backdrop" (click)="closeDayModal()">
+    <div class="day-modal glass-panel" (click)="$event.stopPropagation()">
+      <div class="day-modal-header">
+        <h3 class="day-modal-title">{{ modalHeading() }}</h3>
+        <button class="day-modal-close" (click)="closeDayModal()" aria-label="Close">×</button>
+      </div>
+      <div class="day-modal-body">
+        @if (modalTasks().length === 0) {
+          <div class="upcoming-empty">No tasks due on this day.</div>
+        } @else {
+          <ul class="upcoming-list">
+            @for (task of modalTasks(); track task.id) {
+              <li
+                class="upcoming-row glass-panel"
+                [class.completed]="task.isCompleted"
+                (click)="openTask(task)"
+              >
+                <label class="upcoming-checkbox" (click)="$event.stopPropagation()">
+                  <input
+                    type="checkbox"
+                    [checked]="task.isCompleted"
+                    (change)="toggleComplete(task, $event)"
+                  />
+                  <span class="upcoming-checkmark"></span>
+                </label>
+                <div class="upcoming-main">
+                  <div class="upcoming-title" [class.done]="task.isCompleted">{{ task.title }}</div>
+                  <div class="upcoming-meta">
+                    @if (task.dueAt) {
+                      <span class="upcoming-due">📅 {{ task.dueAt | date:'h:mm a' }}</span>
+                    }
+                    <span class="badge priority-{{ task.priority }}">{{ task.priority | uppercase }}</span>
+                    @for (tag of tagsFor(task); track tag.id) {
+                      <span class="tag-chip" [style.--tag-color]="tag.color">{{ tag.label }}</span>
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+}
