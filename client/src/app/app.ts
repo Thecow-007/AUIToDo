@@ -3,13 +3,17 @@ import { NavigationPane } from './components/navigation-pane/navigation-pane';
 import { MainContentPane } from './components/main-content-pane/main-content-pane';
 import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
 import { HeaderBar } from './components/header-bar/header-bar';
+import { TaskModal } from './components/task-modal/task-modal';
+import { TaskModalService } from './services/task-modal.service';
+import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox],
+  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
+  modalService = inject(TaskModalService);
   protected readonly title = signal('client');
 }

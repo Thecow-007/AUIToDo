@@ -15,3 +15,7 @@
     <app-ai-chat-box></app-ai-chat-box>
   </footer>
 </main>
+
+@if (modalService.selectedTask()) {
+  <app-task-modal [task]="modalService.selectedTask()!" (close)="modalService.closeModal()"></app-task-modal>
+}

@@ -1,16 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Task } from '../../models/task.model';
 import { TaskNode } from '../task-node/task-node';
-import { TaskModal } from '../task-modal/task-modal';
+import { TaskModalService } from '../../services/task-modal.service';
 
 @Component({
   selector: 'app-main-content-pane',
-  imports: [TaskNode, TaskModal],
+  imports: [TaskNode],
   templateUrl: './main-content-pane.html',
   styleUrl: './main-content-pane.css',
 })
 export class MainContentPane {
-  selectedTask = signal<Task | null>(null);
+  modalService = inject(TaskModalService);
 
   rootTask: Task = {
     id: 'root-1',
@@ -63,10 +63,6 @@ export class MainContentPane {
   };
 
   openModal(task: Task) {
-    this.selectedTask.set(task);
-  }
-
-  closeModal() {
-    this.selectedTask.set(null);
+    this.modalService.openModal(task);
   }
 }
