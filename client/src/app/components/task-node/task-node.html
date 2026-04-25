@@ -1,0 +1,69 @@
+<div class="task-node-container" [class.is-root]="isRoot">
+  
+  <div class="task-minimal glass-panel" 
+       [ngClass]="changeClass" 
+       [class.drag-over]="isDragOver()"
+       draggable="true"
+       (dragstart)="onDragStart($event)"
+       (dragend)="onDragEnd($event)"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDrop($event)"
+       (click)="onTaskClick($event)">
+    <div class="minimal-left">
+      @if (task.subTasks && task.subTasks.length > 0) {
+        <button class="expand-toggle" [class.expanded]="isExpanded()" (click)="toggleExpand($event)">
+          ▶
+        </button>
+      } @else {
+        <div class="expand-placeholder"></div>
+      }
+      <span class="drag-handle" title="Drag to reparent">⠿</span>
+      <label class="checkbox-wrapper" (click)="$event.stopPropagation()">
+        <input type="checkbox" [checked]="task.isCompleted" (change)="toggleCompletion($event)" />
+        <span class="checkmark"></span>
+      </label>
+      <span class="task-title" [class.completed]="task.isCompleted" [ngClass]="getFieldChangeClass('title')">
+        @if (hasFieldChange('title') && getFieldOldValue('title')) {
+          <span class="old-value">{{ getFieldOldValue('title') }}</span>
+        }
+        {{ task.title }}
+      </span>
+    </div>
+    
+    <div class="minimal-right">
+      @if (task.dueDate) {
+        <span class="minimal-meta" [ngClass]="getFieldChangeClass('dueDate')">
+          @if (hasFieldChange('dueDate') && getFieldOldValue('dueDate')) {
+            <span class="old-value">{{ getFieldOldValue('dueDate') }}</span>
+          }
+          📅 {{ task.dueDate }}
+        </span>
+      }
+      <span class="badge priority-{{ task.priority.toLowerCase() }}" [ngClass]="getFieldChangeClass('priority')">
+        {{ task.priority }}
+      </span>
+      @if (task.subTasks && task.subTasks.length > 0) {
+        <span class="subtask-count">{{ task.subTasks.length }} subtasks</span>
+      }
+    </div>
+
+    @if (task.changeType && task.changeType !== 'none') {
+      <div class="change-label">{{ task.changeType | uppercase }}</div>
+    }
+  </div>
+
+  <!-- Recursive Subtasks -->
+  @if (isExpanded() && task.subTasks && task.subTasks.length > 0) {
+    <div class="sub-tasks-list">
+      @for (subtask of task.subTasks; track subtask.id) {
+        <app-task-node 
+          [task]="subtask"
+          [parentTask]="task"
+          [depth]="depth + 1"
+          (taskClicked)="onChildTaskClick($event)">
+        </app-task-node>
+      }
+    </div>
+  }
+</div>

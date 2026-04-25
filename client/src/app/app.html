@@ -1,0 +1,26 @@
+<main class="app-layout" [style.grid-template-rows]="chatPanel.isVisible() ? '60px 1fr ' + chatPanel.panelHeight() + 'px' : '60px 1fr'">
+  <header class="pane-header glass-panel">
+    <app-header-bar></app-header-bar>
+  </header>
+
+  <aside class="pane-navigation glass-panel">
+    <app-navigation-pane></app-navigation-pane>
+  </aside>
+
+  <section class="pane-main glass-panel">
+    <app-main-content-pane></app-main-content-pane>
+  </section>
+
+  @if (chatPanel.isVisible()) {
+    <footer class="pane-chat glass-panel">
+      <div class="resize-handle" (mousedown)="onResizeStart($event)">
+        <div class="resize-grip"></div>
+      </div>
+      <app-ai-chat-box></app-ai-chat-box>
+    </footer>
+  }
+</main>
+
+@if (modalService.selectedTask()) {
+  <app-task-modal [task]="modalService.selectedTask()!" (close)="modalService.closeModal()"></app-task-modal>
+}

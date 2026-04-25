@@ -1,0 +1,63 @@
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-content glass-panel" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <input type="text" class="task-title-input" [(ngModel)]="task.title" placeholder="Task Title" />
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="task-meta">
+        <div class="meta-item">
+          <strong>Status</strong>
+          <select [(ngModel)]="task.isCompleted" class="meta-select">
+            <option [ngValue]="false">In Progress</option>
+            <option [ngValue]="true">Completed</option>
+          </select>
+        </div>
+        <div class="meta-item">
+          <strong>Priority</strong>
+          <select [(ngModel)]="task.priority" class="meta-select">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+        <div class="meta-item">
+          <strong>Due Date</strong>
+          <input type="text" [(ngModel)]="task.dueDate" class="meta-input" placeholder="e.g. Tomorrow, 5:00 PM" />
+        </div>
+        <div class="meta-item">
+          <strong>Estimated</strong>
+          <input type="text" [(ngModel)]="task.estimatedDuration" class="meta-input" placeholder="e.g. 2 hrs" />
+        </div>
+        <div class="meta-item">
+          <strong>Energy</strong>
+          <select [(ngModel)]="task.energyLevel" class="meta-select">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="task-description">
+        <div class="description-header">
+          <h3>Description</h3>
+          <button class="preview-toggle" (click)="togglePreview()">
+            {{ isPreview() ? '✏️ Edit' : '👁️ Preview' }}
+          </button>
+        </div>
+        @if (isPreview()) {
+          <div class="markdown-preview" [innerHTML]="task.description | markdown"></div>
+        } @else {
+          <textarea [(ngModel)]="task.description" placeholder="Write your description in **markdown**..."></textarea>
+        }
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="save-btn" (click)="closeModal()">Done</button>
+    </div>
+  </div>
+</div>
