@@ -1,0 +1,51 @@
+<div class="task-details">
+  <div class="filter-bar">
+    <button class="filter-btn" [class.active]="activeFilterCount() > 0" (click)="toggleFilterPanel()">
+      <span>🎚 Filters</span>
+      @if (activeFilterCount() > 0) {
+        <span class="filter-count">{{ activeFilterCount() }}</span>
+      }
+    </button>
+    @if (activeFilterCount() > 0) {
+      <button class="filter-clear" (click)="clearFilters()">Clear</button>
+    }
+  </div>
+
+  @if (filterPanelOpen()) {
+    <div class="filter-panel glass-panel">
+      <div class="filter-group">
+        <div class="filter-group-label">Priority</div>
+        <div class="filter-chip-row">
+          @for (p of allPriorities; track p) {
+            <button
+              class="filter-chip priority-{{ p }}"
+              [class.on]="activePriorities().has(p)"
+              (click)="togglePriority(p)"
+            >{{ p }}</button>
+          }
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-label">Due</div>
+        <div class="filter-chip-row">
+          <button class="filter-chip" [class.on]="dateRange() === 'any'" (click)="setDateRange('any')">Any</button>
+          <button class="filter-chip" [class.on]="dateRange() === 'today'" (click)="setDateRange('today')">Today</button>
+          <button class="filter-chip" [class.on]="dateRange() === 'week'" (click)="setDateRange('week')">This week</button>
+          <button class="filter-chip" [class.on]="dateRange() === 'overdue'" (click)="setDateRange('overdue')">Overdue</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="task-tree">
+    @for (rootId of taskService.rootTaskIds(); track rootId) {
+      @let root = taskService.getTask(rootId);
+      @if (root) {
+        <app-task-node [task]="root" [isRoot]="true" [depth]="0"></app-task-node>
+      }
+    }
+    @if (taskService.rootTaskIds().length === 0) {
+      <div class="empty-state">No tasks match your filters.</div>
+    }
+  </div>
+</div>

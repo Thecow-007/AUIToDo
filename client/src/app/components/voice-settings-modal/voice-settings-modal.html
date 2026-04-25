@@ -1,0 +1,70 @@
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="settings-panel glass-panel" (click)="stopPropagation($event)">
+    <div class="settings-header">
+      <h3>🎙️ Voice Settings</h3>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="settings-body">
+      <!-- STT Status -->
+      <div class="setting-group">
+        <label class="setting-label">Speech Recognition</label>
+        <div class="status-indicator">
+          @if (speechService.sttSupported) {
+            <span class="status-badge supported">✓ Supported</span>
+          } @else {
+            <span class="status-badge unsupported">✗ Not available in this browser</span>
+          }
+        </div>
+      </div>
+
+      <!-- TTS Mode -->
+      <div class="setting-group">
+        <label class="setting-label">Text-to-Speech Mode</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="ttsMode" value="off" [(ngModel)]="ttsMode" />
+            <span class="radio-mark"></span>
+            <div class="radio-text">
+              <span class="radio-title">Off</span>
+              <span class="radio-desc">AI responses are text only</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="ttsMode" value="spoken-only" [(ngModel)]="ttsMode" />
+            <span class="radio-mark"></span>
+            <div class="radio-text">
+              <span class="radio-title">Spoken messages only</span>
+              <span class="radio-desc">Read aloud responses to voice input</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="ttsMode" value="always" [(ngModel)]="ttsMode" />
+            <span class="radio-mark"></span>
+            <div class="radio-text">
+              <span class="radio-title">Always</span>
+              <span class="radio-desc">Read aloud all AI responses</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Voice Picker -->
+      <div class="setting-group">
+        <label class="setting-label">Voice</label>
+        <div class="voice-picker">
+          <select [(ngModel)]="selectedVoiceURI" class="voice-select">
+            @for (voice of speechService.availableVoices(); track voice.voiceURI) {
+              <option [value]="voice.voiceURI">
+                {{ voice.name }} ({{ voice.lang }}) {{ voice.default ? '— Default' : '' }}
+              </option>
+            }
+          </select>
+          <button class="preview-btn" (click)="previewVoice()" [disabled]="!speechService.ttsSupported">
+            ▶ Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

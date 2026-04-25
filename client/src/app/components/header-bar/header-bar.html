@@ -1,0 +1,25 @@
+<div class="header-content">
+  <div class="brand">
+    <h2>AUITodo</h2>
+  </div>
+
+  <div class="user-actions">
+    <button class="bell-btn" title="Notifications">
+      <span class="bell-icon">🔔</span>
+      @if (unreadCount() > 0) {
+        <span class="unread-badge">{{ unreadCount() }}</span>
+      }
+    </button>
+
+    <button class="chat-toggle" (click)="chatPanel.toggle()" [title]="chatPanel.isVisible() ? 'Hide AI Chat' : 'Show AI Chat'">
+      <span class="chat-toggle-icon">✨</span>
+      <span class="chat-toggle-label">{{ chatPanel.isVisible() ? 'Hide' : 'Show' }} AI</span>
+    </button>
+
+    <div class="user-profile">
+      <div class="avatar user-avatar">U</div>
+      <span class="username">{{ auth.currentUser()?.email ?? 'Guest' }}</span>
+    </div>
+    <button class="auth-btn" (click)="onLogOut()">Log Out</button>
+  </div>
+</div>
