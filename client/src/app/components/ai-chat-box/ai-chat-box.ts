@@ -74,7 +74,7 @@ export class AiChatBox {
     this.messages.update((m) => [...m, aiMsg]);
     const aiIndex = this.messages().length - 1;
 
-    const history = this.messages()
+    const history: { role: 'user' | 'assistant'; content: string }[] = this.messages()
       .slice(0, -1)
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }));
 

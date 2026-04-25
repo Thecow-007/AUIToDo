@@ -29,9 +29,14 @@ export class AuthService {
       .pipe(tap((user) => this.currentUser.set(user)));
   }
 
-  register(email: string, password: string): Observable<AuthUser> {
+  register(email: string, password: string, displayName?: string): Observable<AuthUser> {
+    const body = {
+      email,
+      password,
+      displayName: displayName?.trim() || email.split('@')[0] || 'user',
+    };
     return this.http
-      .post<AuthUser>('/api/auth/register', { email, password })
+      .post<AuthUser>('/api/auth/register', body)
       .pipe(tap((user) => this.currentUser.set(user)));
   }
 
