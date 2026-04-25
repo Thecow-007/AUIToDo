@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, forwardRef, signal, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, forwardRef, signal } from '@angular/core';
 import { Task } from '../../models/task.model';
 
 @Component({
@@ -7,7 +7,7 @@ import { Task } from '../../models/task.model';
   templateUrl: './task-node.html',
   styleUrl: './task-node.css',
 })
-export class TaskNode implements OnInit {
+export class TaskNode {
   @Input({ required: true }) task!: Task;
   @Input() isRoot: boolean = false;
   @Input() depth: number = 0;
@@ -15,13 +15,7 @@ export class TaskNode implements OnInit {
   @Output() taskClicked = new EventEmitter<Task>();
 
   // Controls visibility of nested subtasks
-  isExpanded = signal<boolean>(false);
-
-  ngOnInit() {
-    if (this.isRoot) {
-      this.isExpanded.set(true);
-    }
-  }
+  isExpanded = signal<boolean>(true);
 
   onTaskClick(event: Event) {
     event.stopPropagation();

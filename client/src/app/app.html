@@ -12,10 +12,10 @@
   </section>
 
   @if (chatPanel.isVisible()) {
-    <div class="resize-handle" (mousedown)="onResizeStart($event)">
-      <div class="resize-grip"></div>
-    </div>
     <footer class="pane-chat glass-panel">
+      <div class="resize-handle" (mousedown)="onResizeStart($event)">
+        <div class="resize-grip"></div>
+      </div>
       <app-ai-chat-box></app-ai-chat-box>
     </footer>
   }
