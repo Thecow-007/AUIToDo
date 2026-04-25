@@ -48,6 +48,16 @@ app.use('/api/ai', requireAuth, aiChatRoutes);
 // Static client (production build). In dev the Angular CLI serves the client itself.
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// SPA fallback: serve index.html for unmatched GETs so deep-linked routes (e.g. /calendar)
+// don't 404 on hard refresh. Skip /api/* so unknown API paths still return JSON 404s.
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'), (err) => {
+    if (err) next();
+  });
+});
+
 app.use(errorHandler);
 
 module.exports = app;
