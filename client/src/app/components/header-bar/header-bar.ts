@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ChatPanelService } from '../../services/chat-panel.service';
+import { ProfileService } from '../../services/profile.service';
 
 @Component({
   selector: 'app-header-bar',
@@ -9,4 +10,5 @@ import { ChatPanelService } from '../../services/chat-panel.service';
 })
 export class HeaderBar {
   chatPanel = inject(ChatPanelService);
+  profileService = inject(ProfileService);
 }

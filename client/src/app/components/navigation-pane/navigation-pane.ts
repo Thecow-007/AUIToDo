@@ -7,9 +7,9 @@ import { Component, signal } from '@angular/core';
   styleUrl: './navigation-pane.css',
 })
 export class NavigationPane {
-  activeTab = signal<'search' | 'urgent' | 'calendar' | 'all'>('all');
+  activeTab = signal<'calendar' | 'all'>('all');
 
-  setActiveTab(tab: 'search' | 'urgent' | 'calendar' | 'all') {
+  setActiveTab(tab: 'calendar' | 'all') {
     this.activeTab.set(tab);
   }
 }

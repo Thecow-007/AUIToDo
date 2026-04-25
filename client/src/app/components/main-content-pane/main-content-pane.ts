@@ -1,16 +1,23 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Task } from '../../models/task.model';
 import { TaskNode } from '../task-node/task-node';
 import { TaskModalService } from '../../services/task-modal.service';
 
 @Component({
   selector: 'app-main-content-pane',
-  imports: [TaskNode],
+  imports: [TaskNode, FormsModule],
   templateUrl: './main-content-pane.html',
   styleUrl: './main-content-pane.css',
 })
 export class MainContentPane {
   modalService = inject(TaskModalService);
+
+  isFilterExpanded = signal(false);
+  searchQuery = signal('');
+  statusFilter = signal<string>('any');
+  priorityFilter = signal<string>('any');
+  energyFilter = signal<string>('any');
 
   rootTask: Task = {
     id: 'root-1',
@@ -80,6 +87,77 @@ export class MainContentPane {
       }
     ]
   };
+
+  filteredRootTask = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const status = this.statusFilter();
+    const priority = this.priorityFilter();
+    const energy = this.energyFilter();
+
+    // If no filters are active, return the raw tree
+    if (!q && status === 'any' && priority === 'any' && energy === 'any') {
+      return this.rootTask;
+    }
+
+    const filterNode = (node: Task): Task | null => {
+      let matches = true;
+
+      // 1. Check keyword
+      if (q) {
+        const titleMatch = node.title.toLowerCase().includes(q);
+        const descMatch = node.description ? node.description.toLowerCase().includes(q) : false;
+        if (!titleMatch && !descMatch) matches = false;
+      }
+
+      // 2. Check status (assuming isCompleted logic for 'To Do' vs 'Done' for now since mock data uses isCompleted instead of actual 'status')
+      // Note: mock data currently only uses `isCompleted`. Real backend would use `status`.
+      if (status !== 'any') {
+        if (status === 'Done' && !node.isCompleted) matches = false;
+        if ((status === 'To Do' || status === 'In Progress') && node.isCompleted) matches = false;
+      }
+
+      // 3. Check priority
+      if (priority !== 'any' && node.priority?.toLowerCase() !== priority.toLowerCase()) {
+        matches = false;
+      }
+
+      // 4. Check energy
+      if (energy !== 'any' && node.energyLevel?.toLowerCase() !== energy.toLowerCase()) {
+        matches = false;
+      }
+
+      // Check children recursively
+      let matchingChildren: Task[] = [];
+      if (node.subTasks && node.subTasks.length > 0) {
+        for (const child of node.subTasks) {
+          const filteredChild = filterNode(child);
+          if (filteredChild) {
+            matchingChildren.push(filteredChild);
+          }
+        }
+      }
+
+      // "Path-to-match": Keep node if it matches OR if any of its descendants match
+      if (matches || matchingChildren.length > 0) {
+        return {
+          ...node,
+          subTasks: matchingChildren
+        };
+      }
+
+      return null;
+    };
+
+    const result = filterNode(this.rootTask);
+    
+    // If the root task itself got completely filtered out, we'll just return a dummy empty root
+    // to prevent UI crashes, though normally you'd show an empty state.
+    if (!result) {
+      return { ...this.rootTask, subTasks: [] };
+    }
+    
+    return result;
+  });
 
   openModal(task: Task) {
     this.modalService.openModal(task);

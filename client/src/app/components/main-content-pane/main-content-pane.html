@@ -1,6 +1,62 @@
 <div class="task-details">
   <div class="breadcrumb">Home Projects &gt; <span>{{ rootTask.title }}</span></div>
-  <app-task-node [task]="rootTask" [parentTask]="null" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
+  
+  <div class="filter-section">
+    <button class="filter-toggle-btn" 
+            [class.active]="isFilterExpanded()"
+            (click)="isFilterExpanded.set(!isFilterExpanded())">
+      <span class="icon">🔍</span>
+      <span>{{ isFilterExpanded() ? 'Hide Filters' : 'Filter Tasks' }}</span>
+      <span class="chevron">{{ isFilterExpanded() ? '▲' : '▼' }}</span>
+    </button>
+
+    @if (isFilterExpanded()) {
+      <div class="filter-panel glass-panel">
+        <div class="filter-grid">
+          <div class="filter-group keyword-group">
+            <label>Keyword Search</label>
+            <input type="text" 
+                   class="form-input" 
+                   [(ngModel)]="searchQuery" 
+                   placeholder="Search by title or description..." />
+          </div>
+          
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="form-input" [(ngModel)]="statusFilter">
+              <option value="any">Any Status</option>
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Priority</label>
+            <select class="form-input" [(ngModel)]="priorityFilter">
+              <option value="any">Any Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Energy Level</label>
+            <select class="form-input" [(ngModel)]="energyFilter">
+              <option value="any">Any Energy</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <app-task-node [task]="filteredRootTask()" [parentTask]="null" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
 </div>
 
 

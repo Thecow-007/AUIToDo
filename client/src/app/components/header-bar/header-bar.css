@@ -24,17 +24,21 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  cursor: pointer;
   padding: 0.3rem 0.6rem;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
 
-.user-profile:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--glass-border);
+.user-profile.clickable {
+  cursor: pointer;
+}
+
+.user-profile.clickable:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .avatar {

@@ -8,9 +8,9 @@
       <span class="chat-toggle-icon">✨</span>
       <span class="chat-toggle-label">{{ chatPanel.isVisible() ? 'Hide' : 'Show' }} AI</span>
     </button>
-    <div class="user-profile">
-      <div class="avatar user-avatar">U</div>
-      <span class="username">Test User</span>
+    <div class="user-profile clickable" (click)="profileService.openModal()" title="Manage Profile">
+      <div class="avatar user-avatar">{{ profileService.currentUser().initials }}</div>
+      <span class="username">{{ profileService.currentUser().name }}</span>
     </div>
     <button class="auth-btn">Log Out</button>
   </div>
