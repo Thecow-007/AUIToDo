@@ -15,7 +15,7 @@ const embeddings = require('./embeddings');
 
 const { ObjectId } = mongoose.Types;
 
-const PATCHABLE_FIELDS = ['title', 'description', 'priority', 'dueAt', 'tagIds'];
+const PATCHABLE_FIELDS = ['title', 'description', 'priority', 'dueAt', 'tagIds', 'parentId'];
 
 function asObjectId(value, label) {
   if (!value) throw new HttpError(400, `${label}_required`);
@@ -118,6 +118,10 @@ async function updateTodo(userId, id, input = {}) {
   const after = {};
   let textChanged = false;
 
+  let oldParentId = null;
+  let newParentId;
+  let parentChanged = false;
+
   for (const key of PATCHABLE_FIELDS) {
     if (!(key in input)) continue;
     let next = input[key];
@@ -139,19 +143,56 @@ async function updateTodo(userId, id, input = {}) {
       if (!next) throw new HttpError(400, 'title_required');
     } else if (key === 'description') {
       next = (next || '').toString();
+    } else if (key === 'parentId') {
+      if (next === null || next === '' || next === undefined) {
+        next = null;
+      } else {
+        const parentOid = asObjectId(next, 'parent_id');
+        if (parentOid.equals(todo._id)) throw new HttpError(400, 'parent_self');
+        // Walk up the new parent's chain — if we hit todo._id, this would create a cycle.
+        const newParent = await Todo.findOne({ _id: parentOid, userId });
+        if (!newParent) throw new HttpError(400, 'parent_not_found');
+        let cursor = newParent;
+        const visited = new Set([cursor._id.toString()]);
+        while (cursor.parentId) {
+          if (cursor.parentId.equals(todo._id)) throw new HttpError(400, 'parent_circular');
+          const key2 = cursor.parentId.toString();
+          if (visited.has(key2)) break; // defensive against pre-existing cycle
+          visited.add(key2);
+          cursor = await Todo.findOne({ _id: cursor.parentId, userId });
+          if (!cursor) break;
+        }
+        next = parentOid;
+      }
     }
 
     const prev = todo[key];
     if (!equalish(prev, next)) {
       before[key] = serialize(prev);
       after[key] = serialize(next);
-      todo[key] = next;
+      if (key === 'parentId') {
+        oldParentId = prev || null;
+        newParentId = next;
+        parentChanged = true;
+      } else {
+        todo[key] = next;
+      }
       if (key === 'title' || key === 'description') textChanged = true;
     }
   }
 
   if (Object.keys(after).length === 0) {
     return { before: {}, after: {}, todo: todo.toClientJSON() };
+  }
+
+  if (parentChanged) {
+    todo.parentId = newParentId;
+    if (oldParentId) {
+      await Todo.updateOne({ _id: oldParentId, userId }, { $pull: { childIds: todo._id } });
+    }
+    if (newParentId) {
+      await Todo.updateOne({ _id: newParentId, userId }, { $addToSet: { childIds: todo._id } });
+    }
   }
 
   await todo.save();

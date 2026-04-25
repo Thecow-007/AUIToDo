@@ -5,7 +5,16 @@
   [class.preview-update]="preview() === 'update'"
   [class.preview-delete]="preview() === 'delete'"
 >
-  <div class="task-minimal glass-panel" (click)="openModal($event)">
+  <div class="task-minimal glass-panel"
+       [ngClass]="changeClass"
+       [class.drag-over]="isDragOver()"
+       draggable="true"
+       (dragstart)="onDragStart($event)"
+       (dragend)="onDragEnd($event)"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDrop($event)"
+       (click)="openModal($event)">
     <div class="minimal-left">
       @if (children().length > 0) {
         <button
@@ -17,18 +26,31 @@
       } @else {
         <div class="expand-placeholder"></div>
       }
+      <span class="drag-handle" title="Drag to reparent">⠿</span>
       <label class="checkbox-wrapper" (click)="$event.stopPropagation()">
         <input type="checkbox" [checked]="task.isCompleted" (change)="toggleCompletion($event)" />
         <span class="checkmark"></span>
       </label>
-      <span class="task-title" [class.completed]="task.isCompleted">{{ task.title }}</span>
+      <span class="task-title" [class.completed]="task.isCompleted" [ngClass]="getFieldChangeClass('title')">
+        @if (hasFieldChange('title') && getFieldOldValue('title')) {
+          <span class="old-value">{{ getFieldOldValue('title') }}</span>
+        }
+        {{ task.title }}
+      </span>
     </div>
 
     <div class="minimal-right">
       @if (task.dueAt) {
-        <span class="minimal-meta">📅 {{ task.dueAt | date:'MMM d, h:mm a' }}</span>
+        <span class="minimal-meta" [ngClass]="getFieldChangeClass('dueAt')">
+          @if (hasFieldChange('dueAt') && getFieldOldValue('dueAt')) {
+            <span class="old-value">{{ getFieldOldValue('dueAt') }}</span>
+          }
+          📅 {{ task.dueAt | date:'MMM d, h:mm a' }}
+        </span>
       }
-      <span class="badge priority-{{ task.priority }}">{{ task.priority }}</span>
+      <span class="badge priority-{{ task.priority }}" [ngClass]="getFieldChangeClass('priority')">
+        {{ task.priority | uppercase }}
+      </span>
       @for (tag of tags(); track tag.id) {
         <span class="tag-chip" [style.--tag-color]="tag.color">{{ tag.label }}</span>
       }
@@ -36,12 +58,20 @@
         <span class="subtask-count">{{ children().length }} subtasks</span>
       }
     </div>
+
+    @if (task.changeType && task.changeType !== 'none') {
+      <div class="change-label">{{ task.changeType | uppercase }}</div>
+    }
   </div>
 
   @if (isExpanded() && children().length > 0) {
     <div class="sub-tasks-list">
       @for (child of children(); track child.id) {
-        <app-task-node [task]="child" [depth]="depth + 1"></app-task-node>
+        <app-task-node
+          [task]="child"
+          [parentTask]="task"
+          [depth]="depth + 1">
+        </app-task-node>
       }
     </div>
   }

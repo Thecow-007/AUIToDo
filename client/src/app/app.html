@@ -1,4 +1,4 @@
-<main class="app-layout">
+<main class="app-layout" [style.grid-template-rows]="chatPanel.isVisible() ? '60px 1fr ' + chatPanel.panelHeight() + 'px' : '60px 1fr'">
   <header class="pane-header glass-panel">
     <app-header-bar></app-header-bar>
   </header>
@@ -11,9 +11,22 @@
     <app-main-content-pane></app-main-content-pane>
   </section>
 
-  <footer class="pane-chat glass-panel">
-    <app-ai-chat-box></app-ai-chat-box>
-  </footer>
+  @if (chatPanel.isVisible()) {
+    <footer class="pane-chat glass-panel">
+      <div class="resize-handle" (mousedown)="onResizeStart($event)">
+        <div class="resize-grip"></div>
+      </div>
+      <app-ai-chat-box></app-ai-chat-box>
+    </footer>
+  }
 </main>
 
 <app-task-modal></app-task-modal>
+
+@if (!auth.currentUser()) {
+  <app-login-screen></app-login-screen>
+}
+
+@if (speechService.isSettingsOpen()) {
+  <app-voice-settings-modal (close)="speechService.isSettingsOpen.set(false)" />
+}

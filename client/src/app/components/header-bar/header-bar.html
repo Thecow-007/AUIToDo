@@ -11,10 +11,15 @@
       }
     </button>
 
+    <button class="chat-toggle" (click)="chatPanel.toggle()" [title]="chatPanel.isVisible() ? 'Hide AI Chat' : 'Show AI Chat'">
+      <span class="chat-toggle-icon">✨</span>
+      <span class="chat-toggle-label">{{ chatPanel.isVisible() ? 'Hide' : 'Show' }} AI</span>
+    </button>
+
     <div class="user-profile">
       <div class="avatar user-avatar">U</div>
-      <span class="username">Test User</span>
+      <span class="username">{{ auth.currentUser()?.email ?? 'Guest' }}</span>
     </div>
-    <button class="auth-btn">Log Out</button>
+    <button class="auth-btn" (click)="onLogOut()">Log Out</button>
   </div>
 </div>

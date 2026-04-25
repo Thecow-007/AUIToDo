@@ -46,19 +46,28 @@
         </div>
 
         <div class="section">
-          <label class="section-label">Description</label>
-          <textarea
-            [ngModel]="t.description"
-            (ngModelChange)="onDescriptionChange($event)"
-            placeholder="Add a description..."
-            rows="5"
-          ></textarea>
+          <div class="description-header">
+            <label class="section-label">Description</label>
+            <button class="preview-toggle" (click)="togglePreview()">
+              {{ isPreview() ? '✏️ Edit' : '👁️ Preview' }}
+            </button>
+          </div>
+          @if (isPreview()) {
+            <div class="markdown-preview" [innerHTML]="t.description | markdown"></div>
+          } @else {
+            <textarea
+              [ngModel]="t.description"
+              (ngModelChange)="onDescriptionChange($event)"
+              placeholder="Write your description in **markdown**..."
+              rows="5"
+            ></textarea>
+          }
         </div>
 
         <div class="section">
           <label class="section-label">Tags</label>
           @if (availableTags().length === 0) {
-            <div class="empty-tags">No tags yet — create tags from the Tags page.</div>
+            <div class="empty-tags">No tags yet — create tags via the AI chat or backend.</div>
           } @else {
             <div class="tag-list">
               @for (tag of availableTags(); track tag.id) {

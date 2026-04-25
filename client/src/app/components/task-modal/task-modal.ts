@@ -1,12 +1,13 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Priority } from '../../models/task.model';
 import { TaskService } from '../../services/task.service';
 import { TaskModalService } from '../../services/task-modal.service';
+import { MarkdownPipe } from '../../pipes/markdown.pipe';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, MarkdownPipe],
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
 })
@@ -15,6 +16,7 @@ export class TaskModal {
   private readonly modal = inject(TaskModalService);
 
   readonly priorities: Priority[] = ['low', 'medium', 'high', 'urgent'];
+  readonly isPreview = signal<boolean>(false);
 
   readonly task = computed(() => {
     const id = this.modal.openTaskId();
@@ -35,6 +37,10 @@ export class TaskModal {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
+
+  togglePreview() {
+    this.isPreview.update((v) => !v);
+  }
 
   close() {
     this.modal.close();
