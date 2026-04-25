@@ -42,8 +42,17 @@
       </div>
 
       <div class="task-description">
-        <h3>Description</h3>
-        <textarea [(ngModel)]="task.description" placeholder="Add a more detailed description..."></textarea>
+        <div class="description-header">
+          <h3>Description</h3>
+          <button class="preview-toggle" (click)="togglePreview()">
+            {{ isPreview() ? '✏️ Edit' : '👁️ Preview' }}
+          </button>
+        </div>
+        @if (isPreview()) {
+          <div class="markdown-preview" [innerHTML]="task.description | markdown"></div>
+        } @else {
+          <textarea [(ngModel)]="task.description" placeholder="Write your description in **markdown**..."></textarea>
+        }
       </div>
     </div>
     

@@ -15,7 +15,7 @@ export class MainContentPane {
   rootTask: Task = {
     id: 'root-1',
     title: 'Clean Garage',
-    description: 'Sort through all the boxes, organize the tools, and sweep the floor. Make sure to recycle the cardboard.',
+    description: '## Steps\n\n1. **Sort** through all the boxes\n2. **Organize** the tools on the pegboard\n3. Sweep the floor\n\n> Make sure to recycle the cardboard!\n\nSee the [recycling guide](https://example.com) for details.',
     isCompleted: false,
     priority: 'Medium',
     dueDate: 'Tomorrow, 5:00 PM',

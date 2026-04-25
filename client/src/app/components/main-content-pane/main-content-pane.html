@@ -1,6 +1,6 @@
 <div class="task-details">
   <div class="breadcrumb">Home Projects &gt; <span>{{ rootTask.title }}</span></div>
-  <app-task-node [task]="rootTask" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
+  <app-task-node [task]="rootTask" [parentTask]="null" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
 </div>
 
 

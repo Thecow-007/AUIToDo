@@ -1,6 +1,15 @@
 <div class="task-node-container" [class.is-root]="isRoot">
   
-  <div class="task-minimal glass-panel" [ngClass]="changeClass" (click)="onTaskClick($event)">
+  <div class="task-minimal glass-panel" 
+       [ngClass]="changeClass" 
+       [class.drag-over]="isDragOver()"
+       draggable="true"
+       (dragstart)="onDragStart($event)"
+       (dragend)="onDragEnd($event)"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDrop($event)"
+       (click)="onTaskClick($event)">
     <div class="minimal-left">
       @if (task.subTasks && task.subTasks.length > 0) {
         <button class="expand-toggle" [class.expanded]="isExpanded()" (click)="toggleExpand($event)">
@@ -9,6 +18,7 @@
       } @else {
         <div class="expand-placeholder"></div>
       }
+      <span class="drag-handle" title="Drag to reparent">⠿</span>
       <label class="checkbox-wrapper" (click)="$event.stopPropagation()">
         <input type="checkbox" [checked]="task.isCompleted" (change)="toggleCompletion($event)" />
         <span class="checkmark"></span>
@@ -48,7 +58,8 @@
     <div class="sub-tasks-list">
       @for (subtask of task.subTasks; track subtask.id) {
         <app-task-node 
-          [task]="subtask" 
+          [task]="subtask"
+          [parentTask]="task"
           [depth]="depth + 1"
           (taskClicked)="onChildTaskClick($event)">
         </app-task-node>
