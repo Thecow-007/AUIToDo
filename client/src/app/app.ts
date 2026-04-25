@@ -1,0 +1,15 @@
+import { Component, signal } from '@angular/core';
+import { NavigationPane } from './components/navigation-pane/navigation-pane';
+import { MainContentPane } from './components/main-content-pane/main-content-pane';
+import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
+import { HeaderBar } from './components/header-bar/header-bar';
+
+@Component({
+  selector: 'app-root',
+  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  protected readonly title = signal('client');
+}

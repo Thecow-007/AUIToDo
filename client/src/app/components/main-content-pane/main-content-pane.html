@@ -1,0 +1,8 @@
+<div class="task-details">
+  <div class="breadcrumb">Home Projects &gt; <span>{{ rootTask.title }}</span></div>
+  <app-task-node [task]="rootTask" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
+</div>
+
+@if (selectedTask()) {
+  <app-task-modal [task]="selectedTask()!" (close)="closeModal()"></app-task-modal>
+}
