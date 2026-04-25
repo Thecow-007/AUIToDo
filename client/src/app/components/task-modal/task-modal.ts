@@ -144,4 +144,14 @@ export class TaskModal {
   isTagOn(tagId: string): boolean {
     return this.task()?.tagIds.includes(tagId) ?? false;
   }
+
+  deleteTask() {
+    const t = this.task();
+    if (!t) return;
+    if (window.confirm(`Are you sure you want to delete "${t.title}"?`)) {
+      this.taskService.deleteTask(t.id).subscribe(() => {
+        this.close();
+      });
+    }
+  }
 }

@@ -104,4 +104,22 @@ export class TaskNode implements OnInit {
     event.stopPropagation();
     this.taskService.toggleComplete(this.task.id).subscribe();
   }
+
+  createSubtask(event: Event) {
+    event.stopPropagation();
+    this.taskService.createTask({
+      title: 'Untitled Subtask',
+      parentId: this.task.id
+    }).subscribe(newTask => {
+      this.isExpanded.set(true); // expand to show the new subtask
+      this.modal.open(newTask.id);
+    });
+  }
+
+  deleteTask(event: Event) {
+    event.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete "${this.task.title}"?`)) {
+      this.taskService.deleteTask(this.task.id).subscribe();
+    }
+  }
 }

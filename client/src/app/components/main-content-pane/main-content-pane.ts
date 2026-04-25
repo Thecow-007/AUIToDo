@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskNode } from '../task-node/task-node';
 import { TaskService, TaskFilters } from '../../services/task.service';
 import { Priority, Task } from '../../models/task.model';
+import { TaskModalService } from '../../services/task-modal.service';
 
 @Component({
   selector: 'app-main-content-pane',
@@ -17,6 +18,13 @@ export class MainContentPane {
   searchQuery = signal('');
   statusFilter = signal<string>('any');
   priorityFilter = signal<string>('any');
+
+  viewTitle = computed(() => {
+    if (this.searchQuery().trim() || this.statusFilter() !== 'any' || this.priorityFilter() !== 'any') {
+      return 'Search Results';
+    }
+    return 'All Tasks';
+  });
 
   toggleFilterPanel() {
     this.isFilterExpanded.update((v) => !v);
@@ -47,7 +55,11 @@ export class MainContentPane {
     this.applyFilters();
   }
 
-  openModal(task: Task) {
-    // left empty for now as requested by user
+  private readonly modal = inject(TaskModalService);
+
+  createNewRootTask() {
+    this.taskService.createTask({ title: 'New Task' }).subscribe(task => {
+      this.modal.open(task.id);
+    });
   }
 }

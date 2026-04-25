@@ -1,5 +1,10 @@
 <div class="task-details">
-  <div class="breadcrumb">Home Projects &gt; <span>Root Task</span></div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+    <div class="breadcrumb">Workspace &gt; <span>{{ viewTitle() }}</span></div>
+    <button (click)="createNewRootTask()" style="background: var(--accent-primary); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 0.3rem;">
+      <span style="font-size: 1.1em; line-height: 1;">+</span> New Task
+    </button>
+  </div>
   
   <div class="filter-section">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">

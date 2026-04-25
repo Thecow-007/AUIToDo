@@ -100,6 +100,42 @@
   margin-left: var(--spacing-md);
 }
 
+.node-actions {
+  display: flex;
+  gap: 0.3rem;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.2s ease;
+}
+
+.task-minimal:hover .node-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.node-action-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.node-action-btn:hover {
+  opacity: 1;
+  background: var(--bg-surface);
+}
+
+.node-action-btn.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
 .task-title {
   font-weight: 500;
   color: var(--text-primary);

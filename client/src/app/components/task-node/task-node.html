@@ -40,6 +40,11 @@
     </div>
 
     <div class="minimal-right">
+      <div class="node-actions" (click)="$event.stopPropagation()">
+        <button class="node-action-btn add-btn" (click)="createSubtask($event)" title="Add Subtask">➕</button>
+        <button class="node-action-btn delete-btn" (click)="deleteTask($event)" title="Delete Task">🗑️</button>
+      </div>
+
       @if (task.dueAt) {
         <span class="minimal-meta" [ngClass]="getFieldChangeClass('dueAt')">
           @if (hasFieldChange('dueAt') && getFieldOldValue('dueAt')) {
