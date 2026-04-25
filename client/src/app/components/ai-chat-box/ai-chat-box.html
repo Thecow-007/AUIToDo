@@ -1,49 +1,56 @@
-<div class="chat-container">
+<div class="chat-container" [class.collapsed]="chatPanel.isCollapsed()">
   <div class="chat-header">
     <span class="chat-title">✨ AI Assistant</span>
-    <button class="settings-btn" (click)="speechService.isSettingsOpen.set(true)" title="Voice Settings">⚙️</button>
+    <div class="header-actions">
+      <button class="settings-btn" (click)="chatPanel.toggleCollapse()" [title]="chatPanel.isCollapsed() ? 'Expand Chat' : 'Collapse Chat'">
+        {{ chatPanel.isCollapsed() ? '🔼' : '🔽' }}
+      </button>
+      <button class="settings-btn" (click)="speechService.isSettingsOpen.set(true)" title="Voice Settings">⚙️</button>
+    </div>
   </div>
 
-  <div class="message-history">
-    @for (msg of messages(); track $index) {
-      @if (msg.role === 'ai') {
-        <div class="message ai-message">
-          <div class="avatar ai-avatar">✨</div>
-          <div class="message-body ai-body">
-            @if (msg.trail && msg.trail.length > 0) {
-              <div class="search-trail" [class.collapsed]="msg.trailCollapsed">
-                @for (step of msg.trail; track $index) {
-                  <div class="trail-step">› {{ step.label }}</div>
+  @if (!chatPanel.isCollapsed()) {
+    <div class="message-history">
+      @for (msg of messages(); track $index) {
+        @if (msg.role === 'ai') {
+          <div class="message ai-message">
+            <div class="avatar ai-avatar">✨</div>
+            <div class="message-body ai-body">
+              @if (msg.trail && msg.trail.length > 0) {
+                <div class="search-trail" [class.collapsed]="msg.trailCollapsed">
+                  @for (step of msg.trail; track $index) {
+                    <div class="trail-step">› {{ step.label }}</div>
+                  }
+                </div>
+              }
+              @if (msg.content) {
+                <div class="content">{{ msg.content }}</div>
+              }
+              <div class="message-meta">
+                <span class="timestamp">{{ msg.timestamp }}</span>
+                @if (msg.wasSynthesized) {
+                  <span class="tts-indicator" title="Spoken aloud">🔊</span>
                 }
               </div>
-            }
-            @if (msg.content) {
+            </div>
+          </div>
+        } @else {
+          <div class="message user-message">
+            <div class="message-body">
               <div class="content">{{ msg.content }}</div>
-            }
-            <div class="message-meta">
-              <span class="timestamp">{{ msg.timestamp }}</span>
-              @if (msg.wasSynthesized) {
-                <span class="tts-indicator" title="Spoken aloud">🔊</span>
-              }
+              <div class="message-meta">
+                @if (msg.wasSpoken) {
+                  <span class="stt-indicator" title="Voice input">🎤</span>
+                }
+                <span class="timestamp">{{ msg.timestamp }}</span>
+              </div>
             </div>
+            <div class="avatar user-avatar">U</div>
           </div>
-        </div>
-      } @else {
-        <div class="message user-message">
-          <div class="message-body">
-            <div class="content">{{ msg.content }}</div>
-            <div class="message-meta">
-              @if (msg.wasSpoken) {
-                <span class="stt-indicator" title="Voice input">🎤</span>
-              }
-              <span class="timestamp">{{ msg.timestamp }}</span>
-            </div>
-          </div>
-          <div class="avatar user-avatar">U</div>
-        </div>
+        }
       }
-    }
-  </div>
+    </div>
+  }
 
   <!-- Transcript overlay -->
   @if (speechService.isListening()) {
@@ -67,8 +74,7 @@
             [class.unsupported]="!speechService.sttSupported"
             [disabled]="!speechService.sttSupported"
             (mousedown)="onMicDown()"
-            (mouseup)="onMicUp()"
-            (mouseleave)="onMicUp()"
+            (dragstart)="$event.preventDefault()"
             title="{{ speechService.sttSupported ? 'Hold to speak' : 'Speech recognition not supported' }}">
       🎤
     </button>

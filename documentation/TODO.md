@@ -1,80 +1,106 @@
-# AUIToDo — Frontend TODO
+# AUIToDo — Frontend / Integration TODO
 
-Tracks remaining work to bring the Angular client fully in line with `ProjectBreakdown.md`. Items completed on the `Daniel` branch are marked at the top for context.
+Tracks remaining work after the **`integration` branch** merge of Daniel's backend with Michael's frontend (2026-04-25). The big plumbing is done; what remains is feature work, polish, and the deferred stretch goals.
 
-## Already done on `Daniel`
+---
 
-- `Task` model rewritten to spec (`parentId`/`childIds`/`tagIds`, `dueAt: Date`, lowercase priority, dropped `estimatedDuration`/`energyLevel`)
-- `TaskService` introduced (flat map + root IDs, completion cascade per spec §3, preview-state tracking, `allTags`)
-- Task detail **modal** mounted at app root and reads the live task via `TaskModalService` + `TaskService` (modal stays in sync as the tree changes)
-- Spec §4 amended: row is a single-line summary (no description); click opens the modal
-- Tag chips render on each row; modal exposes a tag toggle list
-- Preview-state border classes (`preview-create` / `preview-update` / `preview-delete`) added to `task-node.css`
-- Sidebar nav rewritten: List / Calendar / Priority / Tags (Search dropped, Urgent renamed)
-- Sidebar no longer renders page content inline
-- App grid fixed so chatbar spans full bottom width
-- Chatbar restructured: vertical, expand-upward chat history, search-trail rendering, mic button removed
-- Header gained 🔔 bell + unread-count badge
-- Root `npm start` now runs the Angular dev server (`npm run server` / `server:dev` for Express)
+## Already shipped on `integration`
 
-## 1. Routing (blocks most other work)
+### Backend (from Daniel)
+- Models: `User`, `Todo`, `Tag`. `Notification` and `RecurrenceRule` deferred (stretch).
+- Auth: passport-local + bcrypt + Mongo-backed sessions. `/api/auth/{register,login,logout,me}`.
+- Todo CRUD + tag CRUD with `userId` scoping on every query.
+- `POST /api/todos/:id/complete` cascades on check, asymmetric on uncheck, returns `affected[]` for undo.
+- `DELETE /api/todos/:id` returns full subtree snapshot; `POST /api/todos/restore` rehydrates original `_id`s.
+- `PATCH /api/todos/:id` returns `{before, after}` of changed fields (drives undo).
+- **`PATCH /api/todos/:id` now supports `parentId`** — used for drag-drop reparenting. Server walks the new parent's chain and rejects cycles (`parent_circular`, `parent_self`, `parent_not_found`); maintains `childIds` on both old and new parent atomically.
+- AI pipeline (two-phase): `/api/ai/chat` SSE stream. Events: `trail_step`, `preview`, `applied`, `final`, `error`. Atlas vector search with $text fallback. Embedding generation fire-and-forget on todo create/update.
+- Tests: `npm test` (17 API tests, mongodb-memory-server, ~3s, no API cost) + `npm run test:ai` (2 smoke tests, hits Cerebras + OpenAI).
 
-- [ ] Install `@angular/router` (already in deps but unused) and add `provideRouter` to `app.config.ts`.
-- [ ] Add `<router-outlet>` inside `.pane-main` in `app.html` (chatbar must remain outside the outlet — spec §4).
-- [ ] Define routes: `/list` (default), `/calendar`, `/priority`, `/tags`, `/notifications`, `/login`, `/register`.
-- [ ] Wire `navigation-pane` buttons to `routerLink` + `routerLinkActive` (drop the `activeRoute` signal).
-- [ ] Add `CanActivate` auth guard once auth lands (spec §8).
+### Frontend (from Michael, integrated and rewired)
+- Glass-panel layout, header, navigation tabs (All/Calendar/Urgent/Search), main pane with task tree, resizable AI chat panel docked at the bottom.
+- **Drag-and-drop reparenting** with client-side circular-ref guard (`DragDropService`); now PATCHes `/api/todos/:id` instead of mutating local state.
+- Markdown descriptions (`marked` + `MarkdownPipe`) with edit/preview toggle in the task modal.
+- **Speech (STT + TTS)** via Web Speech API: hold-to-talk mic, transcript overlay, voice-settings modal, TTS speak/stop bar. Pure frontend, no backend impact.
+- `ChangeType` + `FieldChange[]` per task for AI diff highlighting (yellow row + old-value strikethrough on changed fields).
+- Task detail modal mounted at app root, kept in sync via `TaskService` + `TaskModalService`.
+- Header-bar: 🔔 bell + unread-count badge, ✨ chat-toggle, **Log Out wired to `AuthService.logout()`**.
 
-## 2. Filter bar component (`/list`, `/calendar`, `/priority`)
+### Glue work done in the merge
+- `Task` model unified — backend shape wins (`parentId`/`childIds`, lowercase priority, `Date dueAt`, `tagIds`). Dropped `estimatedDuration`/`energyLevel` per scope decision. `changeType`/`fieldChanges` kept as optional client-only annotations.
+- `provideHttpClient` wired in `app.config.ts` with a credentials interceptor (session cookie rides every request). Angular dev proxy at `client/proxy.conf.json` forwards `/api/*` → `localhost:7040`.
+- `TaskService` rewritten as the HTTP-backed cache: signal-driven `tasksById`/`rootTaskIds`/`tagsById`/`previewByTaskId`, methods `refresh(filters)`/`createTask`/`updateTask`/`toggleComplete`/`deleteTask`, with completion cascade applied locally on `affected[]`.
+- `AuthService` + `AiChatService` (SSE stream parser using fetch + AbortController, routes `preview`/`applied` events into `TaskService`).
+- `LoginScreen` overlay (email + password, register auto-derives `displayName` from email). Shown when `auth.currentUser()` is null.
+- **Filters button** on the main pane: priority multi-select + due-date preset (Today / This week / Overdue / Any). Calls `/api/todos` with query params.
+- Deleted: `server/controllers/helloController.js`, `server/routes/helloRoutes.js`, `documentation/BackendIntegrationGuide.md`.
 
-- [ ] Build `FilterBar` component: keyword input, multi-tag select, status (all/active/completed), due-date range.
-- [ ] Hold filter state in a `FilterService` (or per-route signals) so it survives nav within filtered routes.
-- [ ] Apply filter to `taskService` projections used by each page.
-- [ ] Replace the `filter-bar-placeholder` div in `main-content-pane.html`.
+---
 
-## 3. Page components
+## 1. Calendar view
 
-- [ ] `/list` — already mostly there via `MainContentPane`; just needs the filter bar and "+ New Todo" buttons (root and per-row).
-- [ ] `/calendar` — month grid with dots on days that have due todos; clicking a day sets the active filter; chronologically-sorted upcoming list below.
-- [ ] `/priority` — four sections (Urgent → High → Medium → Low), each sorted by `dueAt` asc.
-- [ ] `/tags` — tag CRUD; click tag → filter `/list` by that tag.
-- [ ] `/notifications` — paginated list, filters for read/unread + type, click row navigates to the related todo.
+- [ ] `/calendar` route (or a Calendar tab body with real content; Michael's current tab body is a placeholder).
+- [ ] Month grid: days with at least one due todo get a dot. Click a day → active filter narrows the list to that day.
+- [ ] Below the grid: chronological list of upcoming todos (respect active filter from the main pane).
 
-## 4. AI chat pipeline (spec §5)
+## 2. Routing (lower priority — single-page nav works fine for now)
 
-- [ ] `AiChatService` that POSTs to `/api/ai/chat` and consumes the SSE stream.
-- [ ] Map events into chat state:
-  - `trail_step` → append to active AI message's `trail`
-  - `preview` → call `taskService.setPreview(todoId, action)`; clear after `applied`
-  - `applied` → call `taskService.updateTask(...)` / `toggleComplete` / etc.
-  - `final` → set message text and collapse the trail
-  - `error` → render error state
-- [ ] Hold ~300ms preview before applying (spec §4).
-- [ ] Pass `currentView` (active route + filter) to the API on every send.
+The app currently uses sidebar tab signals, not routes. Real routing is only needed if we want deep-linking, browser back/forward, or `CanActivate` guards.
 
-## 5. Backend integration
+- [ ] If we want it: install `@angular/router`, add `provideRouter` to `app.config.ts`, `<router-outlet>` inside `.pane-main`. Routes: `/list`, `/calendar`, `/notifications`, `/login`, `/register`. Wire nav tabs to `routerLink` + `routerLinkActive`.
+- [ ] `CanActivate` guard that redirects to `/login` if `auth.currentUser()` is null. (Currently the LoginScreen overlay handles this without routing.)
 
-- [ ] HTTP client wiring: `provideHttpClient(withInterceptors(...))` with a session cookie credentials interceptor.
-- [ ] `AuthService` (`POST /api/auth/{register,login,logout}`, `GET /api/auth/me`).
-- [ ] `TaskService` swap demo seed for real API calls (`GET /api/todos`, `POST /api/todos`, `PATCH /api/todos/:id`, `DELETE /api/todos/:id`, `POST /api/todos/:id/complete`).
-- [ ] `TagService` against `/api/tags`.
-- [ ] `NotificationsService` polling `/api/notifications/unread-count` every 30s; full list against `/api/notifications`.
+## 3. Filter bar polish
 
-## 6. Auth UI
+- [x] Filters button + priority + due-date presets on main pane.
+- [ ] Keyword search filter (the backend already supports `?q=` via Mongo `$text`).
+- [ ] Tag multi-select filter chip row.
+- [ ] Active filter pills under the button so the user sees what's applied without re-opening the panel.
+- [ ] Persist filter state across nav-tab changes.
 
-- [ ] `/login` and `/register` page components and forms.
-- [ ] Top-bar `Log Out` button must hit `POST /api/auth/logout` and route to `/login`.
+## 4. AI chat — wire the still-pending bits
+
+- [x] `AiChatService` + SSE consumption (trail_step, preview, applied, final, error).
+- [x] `preview` → `taskService.setPreview(...)`; `applied` → preview cleared + `taskService.refresh()`.
+- [ ] **Surgical `applied` handling** — current impl just calls `taskService.refresh()` after every `applied`. Cleaner: deserialize the `todo` payload directly into the cache, only refresh on cascade-affecting mutations (delete, bulk).
+- [ ] **Ghost preview while typing** (spec §4 + §5 ghost-preview pipeline). Backend endpoint `POST /api/ai/ghost-preview` (locate-only, no act). Frontend debounces input ~400ms, min ~8 chars, AbortController on input change.
+- [ ] Pass `currentView` (active tab + active filter) to the chat API on every send. Currently hardcoded to `'list'`.
+- [ ] `Ctrl+Z` undo handler + post-action toast (spec §11). Stack lives on a session-only service. Inverses driven by the response shapes already returned (`{before,after}`, cascade `affected[]`, delete subtree snapshot).
+
+## 5. Auth UI polish
+
+- [x] `LoginScreen` overlay with login + register modes; auto-derives `displayName`.
+- [ ] Optional explicit `displayName` field in the register form.
+- [ ] Better error messages — currently surfaces raw `error` strings (`invalid_email`, `email_taken`, etc.).
+- [ ] "Forgot password" — out of scope for hackathon, but worth flagging.
+
+## 6. Bug fixes / known issues
+
+- [ ] AI chat box: long histories don't auto-scroll to the bottom. Add `@ViewChild` + `scrollIntoView` on new message.
+- [ ] AI chat box `final` event: TTS speaks the AI's literal text including any markdown (e.g. asterisks read as "asterisk"). Strip markdown before passing to `speechService.speak()`.
+- [ ] Drag-drop: `endDrag()` on `dragend` fires AFTER `drop`'s success path, which is fine — but if drop is invalid the dragged ghost stays styled. Verify and clean up.
+- [ ] Filters panel doesn't close on outside click. Either click-away listener, or move it into a popover overlay.
+- [ ] After register, the LoginScreen briefly flashes off-and-on while `tasks.refresh()` resolves. Show a "loading" state during initial fetch.
 
 ## 7. Styling / polish
 
-- [ ] `task-node.css` is 263 bytes over the 4 kB component budget — either bump the budget in `angular.json` or extract the inline-detail-panel styles into a child component.
-- [ ] Animate the preview-state borders into the `applied` mutation (spec calls for ~300ms hold then animate to final state).
+- [ ] `task-node.css` may exceed the 4 KB component budget — bump it in `angular.json` if Angular complains, or extract the inline-detail-panel styles into a child component.
+- [ ] Animate the AI preview borders into the `applied` mutation (~300ms hold then animate to final state).
 - [ ] Decide on offscreen-preview behavior (spec §4: if affected row isn't visible, show preview only in the chat trail).
+- [ ] Calendar tab placeholder shows `[Mini Calendar Widget]` — replace once the calendar view lands.
 
 ## 8. Stretch (per spec §10)
 
-- [ ] Vector search in the locate phase (Atlas Vector Search).
-- [ ] Recurring todos (`RecurrenceRule` model + cron rollover; UI to attach a rule to a todo).
-- [ ] Reminders + notifications surfaces fully wired.
-- [ ] Web Speech API in the chatbar (only after MVP — spec §2 explicitly says do not design for it yet).
-- [ ] Server-Sent Events for live notification delivery.
+- [x] Web Speech API STT/TTS in the chatbar (already shipped).
+- [ ] **Vector search guarantees**: index needs to be created in Atlas UI (see `ProjectBreakdown.md` §5). Until done, locate falls back to `$text` — correct but degraded.
+- [ ] **Recurring todos** (`RecurrenceRule` model + `node-cron` rollover; UI to attach a rule). Spec §6.
+- [ ] **Reminders + notifications** (`Notification` model, `/api/notifications/*`, reminder cron, in-app bell dropdown wiring). Spec §7. Bell currently hardcoded to 0.
+- [ ] Server-Sent Events for live notification delivery (replaces 30s polling).
+
+## 9. Recommended next-session order
+
+1. Calendar view — biggest visible-feature gap.
+2. Bug-fix sweep (section 6) — small wins, improves perceived quality before demo.
+3. Undo (Ctrl+Z + toast) — spec §11, response shapes already support it.
+4. Ghost-preview-on-type — the "wow" interaction the spec built around.
+5. Notifications + recurrence — only if time after MVP polish.

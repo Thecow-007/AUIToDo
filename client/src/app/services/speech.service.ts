@@ -36,7 +36,7 @@ export class SpeechService {
 
     if (this.sttSupported) {
       this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
+      this.recognition.continuous = true;
       this.recognition.interimResults = true;
       this.recognition.lang = 'en-US';
 

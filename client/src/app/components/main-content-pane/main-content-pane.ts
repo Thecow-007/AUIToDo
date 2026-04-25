@@ -1,78 +1,53 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TaskNode } from '../task-node/task-node';
 import { TaskService, TaskFilters } from '../../services/task.service';
-import { Priority } from '../../models/task.model';
-
-type DateRange = 'any' | 'today' | 'week' | 'overdue';
+import { Priority, Task } from '../../models/task.model';
 
 @Component({
   selector: 'app-main-content-pane',
-  imports: [TaskNode],
+  imports: [TaskNode, FormsModule],
   templateUrl: './main-content-pane.html',
   styleUrl: './main-content-pane.css',
 })
 export class MainContentPane {
   readonly taskService = inject(TaskService);
 
-  readonly allPriorities: Priority[] = ['low', 'medium', 'high', 'urgent'];
-  readonly activePriorities = signal<Set<Priority>>(new Set());
-  readonly dateRange = signal<DateRange>('any');
-  readonly filterPanelOpen = signal(false);
-
-  readonly activeFilterCount = computed(
-    () => this.activePriorities().size + (this.dateRange() === 'any' ? 0 : 1),
-  );
+  isFilterExpanded = signal(false);
+  searchQuery = signal('');
+  statusFilter = signal<string>('any');
+  priorityFilter = signal<string>('any');
 
   toggleFilterPanel() {
-    this.filterPanelOpen.update((v) => !v);
+    this.isFilterExpanded.update((v) => !v);
   }
 
-  togglePriority(p: Priority) {
-    this.activePriorities.update((set) => {
-      const next = new Set(set);
-      if (next.has(p)) next.delete(p);
-      else next.add(p);
-      return next;
-    });
-    this.applyFilters();
-  }
-
-  setDateRange(r: DateRange) {
-    this.dateRange.set(r);
-    this.applyFilters();
-  }
-
-  clearFilters() {
-    this.activePriorities.set(new Set());
-    this.dateRange.set('any');
-    this.applyFilters();
-  }
-
-  private applyFilters() {
+  applyFilters() {
     const filters: TaskFilters = {};
-    const ps = Array.from(this.activePriorities());
-    if (ps.length > 0) filters.priority = ps;
+    
+    const q = this.searchQuery().trim();
+    if (q) filters.q = q;
 
-    const now = new Date();
-    switch (this.dateRange()) {
-      case 'today': {
-        const start = new Date(now); start.setHours(0, 0, 0, 0);
-        const end = new Date(start); end.setDate(end.getDate() + 1);
-        filters.dueFrom = start; filters.dueTo = end;
-        break;
-      }
-      case 'week': {
-        const start = new Date(now); start.setHours(0, 0, 0, 0);
-        const end = new Date(start); end.setDate(end.getDate() + 7);
-        filters.dueFrom = start; filters.dueTo = end;
-        break;
-      }
-      case 'overdue':
-        filters.dueTo = now;
-        filters.status = 'open';
-        break;
+    const s = this.statusFilter();
+    if (s === 'To Do' || s === 'In Progress') filters.status = 'active';
+    else if (s === 'Done') filters.status = 'completed';
+
+    const p = this.priorityFilter();
+    if (p !== 'any') {
+      filters.priority = [p.toLowerCase() as Priority];
     }
 
     this.taskService.refresh(filters).subscribe();
+  }
+
+  clearFilters() {
+    this.searchQuery.set('');
+    this.statusFilter.set('any');
+    this.priorityFilter.set('any');
+    this.applyFilters();
+  }
+
+  openModal(task: Task) {
+    // left empty for now as requested by user
   }
 }
