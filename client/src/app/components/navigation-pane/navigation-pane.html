@@ -14,49 +14,10 @@
       <span class="icon">📅</span>
       <span class="tooltip">Calendar</span>
     </button>
-    <button 
-      class="nav-tab" 
-      [class.active]="activeTab() === 'urgent'"
-      (click)="setActiveTab('urgent')">
-      <span class="icon">🔥</span>
-      <span class="tooltip">Urgent View</span>
-    </button>
-    <button 
-      class="nav-tab" 
-      [class.active]="activeTab() === 'search'"
-      (click)="setActiveTab('search')">
-      <span class="icon">🔍</span>
-      <span class="tooltip">Search</span>
-    </button>
   </div>
 </div>
 
 <div class="nav-content">
-  @if (activeTab() === 'search') {
-    <div class="nav-section">
-      <div class="search-bar">
-        <input type="text" placeholder="Search tasks by keyword..." autofocus />
-      </div>
-      <div class="empty-state">
-        <p>Enter a query to find tasks.</p>
-      </div>
-    </div>
-  }
-
-  @if (activeTab() === 'urgent') {
-    <div class="nav-section">
-      <h3>Do This Now</h3>
-      <ul>
-        <li class="urgent-item">
-          <div class="task-info">
-            <span class="task-name">Finish UI Design</span>
-            <span class="badge danger">Urgent</span>
-          </div>
-        </li>
-      </ul>
-    </div>
-  }
-
   @if (activeTab() === 'calendar') {
     <div class="nav-section">
       <h3>Upcoming</h3>
@@ -68,22 +29,71 @@
 
   @if (activeTab() === 'all') {
     <div class="nav-section">
-      <h3>Hierarchy</h3>
-      <ul class="tree-view">
-        <li>
-          <span class="folder-icon">📂</span> Home Projects
-          <ul>
-            <li><span class="file-icon">📄</span> Clean Garage</li>
-            <li><span class="file-icon">📄</span> Paint Fence</li>
-          </ul>
-        </li>
-        <li>
-          <span class="folder-icon">📂</span> Work
-          <ul>
-            <li><span class="file-icon">📄</span> Hackathon MVP</li>
-          </ul>
-        </li>
-      </ul>
+      <h3>Task Tree</h3>
+      @if (taskService.rootTaskIds().length === 0) {
+        <div class="empty-state">No tasks yet</div>
+      } @else {
+        <ul class="tree-view">
+          @for (rootId of taskService.rootTaskIds(); track rootId) {
+            @let root = taskService.getTask(rootId);
+            @if (root) {
+              <li>
+                @if (taskService.getChildren(root.id).length > 0) {
+                  <span class="tree-toggle" 
+                        [class.expanded]="isExpanded(root.id)" 
+                        (click)="toggleExpand(root.id, $event)">▶</span>
+                } @else {
+                  <span class="tree-toggle-placeholder"></span>
+                }
+                <span class="tree-item" 
+                      [class.completed]="root.isCompleted"
+                      (click)="openTask(root.id)">
+                  <span class="file-icon">{{ taskService.getChildren(root.id).length > 0 ? '📂' : '📄' }}</span>
+                  {{ root.title }}
+                </span>
+
+                @if (isExpanded(root.id) && taskService.getChildren(root.id).length > 0) {
+                  <ul>
+                    @for (child of taskService.getChildren(root.id); track child.id) {
+                      <li>
+                        @if (taskService.getChildren(child.id).length > 0) {
+                          <span class="tree-toggle"
+                                [class.expanded]="isExpanded(child.id)"
+                                (click)="toggleExpand(child.id, $event)">▶</span>
+                        } @else {
+                          <span class="tree-toggle-placeholder"></span>
+                        }
+                        <span class="tree-item"
+                              [class.completed]="child.isCompleted"
+                              (click)="openTask(child.id)">
+                          <span class="file-icon">{{ taskService.getChildren(child.id).length > 0 ? '📂' : '📄' }}</span>
+                          {{ child.title }}
+                        </span>
+
+                        @if (isExpanded(child.id) && taskService.getChildren(child.id).length > 0) {
+                          <ul>
+                            @for (grandchild of taskService.getChildren(child.id); track grandchild.id) {
+                              <li>
+                                <span class="tree-toggle-placeholder"></span>
+                                <span class="tree-item"
+                                      [class.completed]="grandchild.isCompleted"
+                                      (click)="openTask(grandchild.id)">
+                                  <span class="file-icon">📄</span>
+                                  {{ grandchild.title }}
+                                </span>
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          }
+        </ul>
+      }
     </div>
   }
 </div>

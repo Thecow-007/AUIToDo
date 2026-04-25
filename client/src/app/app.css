@@ -66,6 +66,7 @@
 app-header-bar,
 app-navigation-pane,
 app-main-content-pane,
+app-calendar-page,
 app-ai-chat-box {
   display: block;
   height: 100%;

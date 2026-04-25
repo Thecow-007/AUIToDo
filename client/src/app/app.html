@@ -1,4 +1,4 @@
-<main class="app-layout" [style.grid-template-rows]="chatPanel.isVisible() ? '60px 1fr ' + chatPanel.panelHeight() + 'px' : '60px 1fr'">
+<main class="app-layout" [style.grid-template-rows]="chatPanel.isVisible() ? (chatPanel.isCollapsed() ? '60px 1fr min-content' : '60px 1fr ' + chatPanel.panelHeight() + 'px') : '60px 1fr'">
   <header class="pane-header glass-panel">
     <app-header-bar></app-header-bar>
   </header>
@@ -8,14 +8,23 @@
   </aside>
 
   <section class="pane-main glass-panel">
-    <app-main-content-pane></app-main-content-pane>
+    @switch (pageService.activePage()) {
+      @case ('calendar') {
+        <app-calendar-page></app-calendar-page>
+      }
+      @default {
+        <app-main-content-pane></app-main-content-pane>
+      }
+    }
   </section>
 
   @if (chatPanel.isVisible()) {
     <footer class="pane-chat glass-panel">
-      <div class="resize-handle" (mousedown)="onResizeStart($event)">
-        <div class="resize-grip"></div>
-      </div>
+      @if (!chatPanel.isCollapsed()) {
+        <div class="resize-handle" (mousedown)="onResizeStart($event)">
+          <div class="resize-grip"></div>
+        </div>
+      }
       <app-ai-chat-box></app-ai-chat-box>
     </footer>
   }
@@ -29,4 +38,8 @@
 
 @if (speechService.isSettingsOpen()) {
   <app-voice-settings-modal (close)="speechService.isSettingsOpen.set(false)" />
+}
+
+@if (profileService.isModalOpen()) {
+  <app-profile-modal (close)="profileService.closeModal()" />
 }

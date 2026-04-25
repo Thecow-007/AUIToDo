@@ -102,6 +102,6 @@ export class TaskNode implements OnInit {
 
   toggleCompletion(event: Event) {
     event.stopPropagation();
-    this.taskService.toggleComplete(this.task.id);
+    this.taskService.toggleComplete(this.task.id).subscribe();
   }
 }

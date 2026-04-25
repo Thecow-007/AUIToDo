@@ -1,9 +1,10 @@
 // Two-phase AI pipeline. Receives the user message + view context, runs a locate
-// loop (vector_search / expand_todo until the model commits via confirm_target or
-// respond_no_target), then runs a single act-tool call. SSE events fire as the
-// model progresses so the frontend can render the search trail and the row-level
-// preview-then-apply animation. Returns a structured "applied" payload that the
-// client uses to push an entry onto its undo stack.
+// loop (vector_search / expand_todo until the model commits via confirm_targets
+// (one or many ids) or respond_no_target), then runs a single bulk act-tool call.
+// SSE events fire as the model progresses so the frontend can render the search
+// trail and the row-level preview-then-apply animation across every located row.
+// Returns a structured "applied" payload that the client uses to push an entry
+// onto its undo stack.
 
 const Todo = require('../models/Todo');
 const Tag = require('../models/Tag');
@@ -33,9 +34,10 @@ async function buildLocateSystemPrompt(userId, currentView) {
 
   return [
     'You are the locate phase of a todo assistant.',
-    'Your job is to identify which existing todo the user is referring to, OR decide that they want a new todo created, OR decide they are just asking a question.',
-    'Tools you may call: vector_search, expand_todo, confirm_target, respond_no_target.',
-    'Always end with confirm_target (existing todo) or respond_no_target (new todo / question).',
+    'Your job is to identify which existing todo(s) the user is referring to, OR decide that they want a new todo created, OR decide they are just asking a question.',
+    'Tools you may call: vector_search, expand_todo, confirm_targets, respond_no_target.',
+    'Always end with confirm_targets (one or more existing todos + intent) or respond_no_target (new top-level todo / question).',
+    'Return MULTIPLE ids in confirm_targets only when the user clearly addresses a set — "all important tasks", "every writing subtask", "the items tagged X". For ambiguous singular references, drill down further; do not guess a set.',
     'When ambiguous, expand or search further — do not guess.',
     'Do NOT apply tags unless the user explicitly indicated something tag-worthy. Default behavior is no-tag.',
     '',
@@ -45,24 +47,28 @@ async function buildLocateSystemPrompt(userId, currentView) {
   ].join('\n');
 }
 
-async function buildActSystemPrompt(userId, locatedTodo) {
+async function buildActSystemPrompt(userId, locatedTargets, intent) {
   const tags = await Tag.find({ userId }).select('_id label').sort({ label: 1 });
   const tagList = tags.map((t) => ({ id: t._id.toString(), label: t.label }));
 
-  if (locatedTodo) {
+  if (locatedTargets && locatedTargets.length) {
     return [
       'You are the act phase of a todo assistant.',
       'Call exactly one action tool, then provide a one-sentence confirmation in natural language for the user.',
+      'You MAY operate on one or many of the located targets in a single tool call (the bulk tools accept arrays).',
+      'Apply the action to ALL located targets unless the user clearly only wants a subset.',
       'Only modify fields the user explicitly asked about.',
       'Do NOT apply tags unless the user explicitly indicated something tag-worthy.',
+      'If intent is create_child, call create_todos with each new todo\'s parentId set to the appropriate located target id.',
       '',
-      `Target todo: ${JSON.stringify(locatedTodo)}`,
+      `Predicted intent (from locate phase): ${intent || 'unknown'}`,
+      `Target todos (${locatedTargets.length}): ${JSON.stringify(locatedTargets)}`,
       `Available tags: ${JSON.stringify(tagList)}`,
     ].join('\n');
   }
   return [
     'You are the act phase of a todo assistant.',
-    'No existing todo was located — the user wants a brand new todo created. Call create_todo.',
+    'No existing todo was located — the user wants brand new todo(s) created. Call create_todos with one or more entries.',
     'Provide a one-sentence confirmation after.',
     'Do NOT apply tags unless the user explicitly indicated something tag-worthy.',
     '',
@@ -88,7 +94,7 @@ async function runLocatePhase({ userId, message, history, currentView, sse }) {
     const toolCalls = reply?.tool_calls || [];
     if (!toolCalls.length) {
       // Model gave up on tools — treat as no_action.
-      return { reason: 'no_action', target: null, transcript: messages };
+      return { reason: 'no_action', targets: [], intent: null, transcript: messages };
     }
 
     // Append the assistant message verbatim so subsequent calls have the tool_call ids in scope.
@@ -104,13 +110,16 @@ async function runLocatePhase({ userId, message, history, currentView, sse }) {
       const args = safeJSON(tc.function?.arguments);
       sse.send('trail_step', { label: aiTools.trailLabelForLocate(name, args), toolName: name, args });
 
-      if (name === 'confirm_target') {
-        terminal = { reason: 'existing', targetId: args.id };
+      if (name === 'confirm_targets') {
+        const ids = Array.isArray(args.ids)
+          ? args.ids.filter((x) => typeof x === 'string' && x)
+          : [];
+        terminal = { reason: 'existing', targetIds: ids, intent: args.intent || null };
         messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify({ ok: true }) });
         continue;
       }
       if (name === 'respond_no_target') {
-        terminal = { reason: args.reason || 'create_new', targetId: null };
+        terminal = { reason: args.reason || 'create_new', targetIds: [], intent: null };
         messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify({ ok: true }) });
         continue;
       }
@@ -124,19 +133,24 @@ async function runLocatePhase({ userId, message, history, currentView, sse }) {
     }
 
     if (terminal) {
-      let target = null;
-      if (terminal.reason === 'existing' && terminal.targetId) {
-        const t = await Todo.findOne({ _id: terminal.targetId, userId });
-        if (t) target = t.toClientJSON();
+      let targets = [];
+      if (terminal.reason === 'existing' && terminal.targetIds.length) {
+        const docs = await Todo.find({ _id: { $in: terminal.targetIds }, userId });
+        const byId = new Map(docs.map((d) => [d._id.toString(), d]));
+        // Preserve the order the model specified, drop unknowns silently.
+        targets = terminal.targetIds
+          .map((id) => byId.get(id))
+          .filter(Boolean)
+          .map((d) => d.toClientJSON());
       }
-      return { reason: terminal.reason, target, transcript: messages };
+      return { reason: terminal.reason, targets, intent: terminal.intent, transcript: messages };
     }
   }
-  return { reason: 'no_action', target: null, transcript: [] };
+  return { reason: 'no_action', targets: [], intent: null, transcript: [] };
 }
 
-async function runActPhase({ userId, message, locatedTarget, sse }) {
-  const systemPrompt = await buildActSystemPrompt(userId, locatedTarget);
+async function runActPhase({ userId, message, locatedTargets, intent, sse }) {
+  const systemPrompt = await buildActSystemPrompt(userId, locatedTargets, intent);
   const messages = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: message },
@@ -158,18 +172,18 @@ async function runActPhase({ userId, message, locatedTarget, sse }) {
   const args = safeJSON(toolCall.function?.arguments);
   sse.send('trail_step', { label: aiTools.trailLabelForAct(name, args), toolName: name, args });
 
-  // Decide which row to flash for the preview state. For create_todo we don't have
-  // an id yet (no row to flash); we still emit a generic preview the chatbar can show.
-  const previewTodoId = locatedTarget?.id || null;
+  // Flash a preview on each located row. `create_todos` has no pre-existing rows
+  // when there are no targets — the chatbar shows the create through the trail only.
+  const previewIds = (locatedTargets || []).map((t) => t.id);
   const previewAction = aiTools.previewActionFor(name);
-  if (previewTodoId) {
-    sse.send('preview', { todoId: previewTodoId, action: previewAction });
+  for (const id of previewIds) {
+    sse.send('preview', { todoId: id, action: previewAction });
   }
   await new Promise((r) => setTimeout(r, PREVIEW_HOLD_MS));
 
   let result;
   try {
-    result = await aiTools.runActTool(userId, name, args, locatedTarget?.id || null);
+    result = await aiTools.runActTool(userId, name, args);
   } catch (err) {
     sse.send('error', { message: err.message });
     return;
@@ -177,7 +191,7 @@ async function runActPhase({ userId, message, locatedTarget, sse }) {
 
   // Shape `applied` so the client can both refresh the UI and push the inverse on
   // its undo stack. Each branch carries the minimum the inverse needs.
-  const applied = buildAppliedPayload(name, args, result, locatedTarget);
+  const applied = buildAppliedPayload(name, args, result, locatedTargets);
   sse.send('applied', applied);
 
   // Ask the model for a one-sentence natural-language confirmation. We give it the
@@ -201,52 +215,75 @@ async function runActPhase({ userId, message, locatedTarget, sse }) {
   sse.send('final', { message: (finalReply?.content || '').trim() || 'Done.' });
 }
 
-function buildAppliedPayload(toolName, args, result, locatedTarget) {
-  if (toolName === 'create_todo') {
-    return { mutation: 'create', todo: result };
+function buildAppliedPayload(toolName, args, result, locatedTargets) {
+  if (toolName === 'create_todos') {
+    return {
+      mutation: 'create',
+      todoIds: result.todos.map((t) => t.id),
+      todos: result.todos,
+    };
   }
-  if (toolName === 'update_todo') {
+  if (toolName === 'update_todos') {
     return {
       mutation: 'update',
-      todoId: result.todo.id,
-      before: result.before,
-      after: result.after,
-      todo: result.todo,
+      todoIds: result.results.map((r) => r.id),
+      results: result.results, // each entry: { id, before, after, todo } — feeds undo
     };
   }
-  if (toolName === 'complete_todo') {
+  if (toolName === 'complete_todos') {
     return {
       mutation: 'complete',
-      todoId: result.todo.id,
-      isCompleted: !!args.isCompleted,
-      affected: result.affected, // pre-images for cascade undo
-      todo: result.todo,
+      todoIds: result.results.map((r) => r.id),
+      isCompleted: !!result.isCompleted,
+      results: result.results, // each entry includes affected[] for cascade undo
     };
   }
-  if (toolName === 'delete_todo') {
+  if (toolName === 'delete_todos') {
+    const todoIds = (locatedTargets || []).map((t) => t.id);
+    const deletedIds = result.results.flatMap((r) => r.deletedIds);
     return {
       mutation: 'delete',
-      todoId: locatedTarget?.id,
-      deletedIds: result.deletedIds,
-      snapshot: result.snapshot, // feeds POST /api/todos/restore for undo
+      todoIds,
+      deletedIds,
+      results: result.results, // each entry carries a snapshot for POST /api/todos/restore
     };
   }
-  if (toolName === 'add_tag_to_todo') {
-    return { mutation: 'tag_add', todoId: result.todo.id, tagId: args.tagId, todo: result.todo };
+  if (toolName === 'add_tag_to_todos') {
+    return {
+      mutation: 'tag_add',
+      todoIds: result.results.map((r) => r.id),
+      tagId: args.tagId,
+      results: result.results,
+    };
   }
-  if (toolName === 'remove_tag_from_todo') {
-    return { mutation: 'tag_remove', todoId: result.todo.id, tagId: args.tagId, todo: result.todo };
+  if (toolName === 'remove_tag_from_todos') {
+    return {
+      mutation: 'tag_remove',
+      todoIds: result.results.map((r) => r.id),
+      tagId: args.tagId,
+      results: result.results,
+    };
   }
   return { mutation: toolName };
 }
 
 function summarizeResultForModel(toolName, result) {
-  if (toolName === 'create_todo') return { ok: true, createdId: result.id, title: result.title };
-  if (toolName === 'update_todo') return { ok: true, changed: Object.keys(result.after) };
-  if (toolName === 'complete_todo') return { ok: true, affectedCount: result.affected.length };
-  if (toolName === 'delete_todo') return { ok: true, deletedCount: result.deletedIds.length };
-  if (toolName === 'add_tag_to_todo' || toolName === 'remove_tag_from_todo') {
-    return { ok: true, changed: result.changed };
+  if (toolName === 'create_todos') {
+    return { ok: true, count: result.todos.length, ids: result.todos.map((t) => t.id) };
+  }
+  if (toolName === 'update_todos') {
+    return { ok: true, count: result.results.length };
+  }
+  if (toolName === 'complete_todos') {
+    const cascadeAffected = result.results.reduce((acc, r) => acc + (r.affected?.length || 0), 0);
+    return { ok: true, count: result.results.length, cascadeAffected };
+  }
+  if (toolName === 'delete_todos') {
+    const deletedCount = result.results.reduce((acc, r) => acc + r.deletedIds.length, 0);
+    return { ok: true, count: result.results.length, deletedCount };
+  }
+  if (toolName === 'add_tag_to_todos' || toolName === 'remove_tag_from_todos') {
+    return { ok: true, count: result.results.length };
   }
   return { ok: true };
 }
@@ -274,7 +311,8 @@ async function runPipeline({ userId, message, history, currentView, sse }) {
     await runActPhase({
       userId,
       message,
-      locatedTarget: locate.target,
+      locatedTargets: locate.targets || [],
+      intent: locate.intent || null,
       sse,
     });
   } catch (err) {

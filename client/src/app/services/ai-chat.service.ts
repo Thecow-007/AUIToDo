@@ -6,7 +6,7 @@ import { ChangeType, FieldChange, PreviewAction, Task } from '../models/task.mod
 export type AiChatEvent =
   | { type: 'trail_step'; label: string; toolName?: string; args?: unknown }
   | { type: 'preview'; todoId: string; action: PreviewAction; fieldChanges?: FieldChange[]; changeType?: ChangeType }
-  | { type: 'applied'; before?: Partial<Task>; after?: Partial<Task>; todo?: Task | null; [k: string]: unknown }
+  | { type: 'applied'; mutation?: string; todoIds?: string[]; before?: Partial<Task>; after?: Partial<Task>; todo?: Task | null; [k: string]: unknown }
   | { type: 'final'; message: string }
   | { type: 'error'; message: string };
 
@@ -100,12 +100,14 @@ export class AiChatService {
       }
     } else if (event.type === 'applied') {
       // Server has applied the mutation — pull a fresh tree so cache mirrors DB,
-      // then clear the per-row preview annotation.
+      // then clear the per-row preview annotation on every affected row.
       this.taskService.refresh().subscribe();
-      const todoId = (event as any).todoId as string | undefined;
-      if (todoId) {
-        this.taskService.setPreview(todoId, null);
-        previewedIds.delete(todoId);
+      const ids = Array.isArray(event.todoIds)
+        ? event.todoIds.filter((x): x is string => typeof x === 'string')
+        : [];
+      for (const id of ids) {
+        this.taskService.setPreview(id, null);
+        previewedIds.delete(id);
       }
     }
   }

@@ -192,3 +192,54 @@
   margin-right: var(--spacing-xs);
   font-size: 1.1em;
 }
+
+.tree-toggle {
+  display: inline-block;
+  width: 1rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease, color 0.2s ease;
+  text-align: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.tree-toggle:hover {
+  color: var(--accent-primary);
+}
+
+.tree-toggle.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-toggle-placeholder {
+  display: inline-block;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.tree-item {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.tree-item:hover {
+  color: var(--accent-primary);
+}
+
+.tree-item.completed {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.tree-view li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.tree-view li > ul {
+  width: 100%;
+}
