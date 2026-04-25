@@ -4,3 +4,4 @@ node_modules/
 npm-debug.log*
 *.log
 .claude
+docker-compose.override.yml
