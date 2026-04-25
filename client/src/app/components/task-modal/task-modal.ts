@@ -56,31 +56,31 @@ export class TaskModal {
 
   onTitleChange(value: string) {
     const id = this.task()?.id;
-    if (id) this.taskService.updateTask(id, { title: value });
+    if (id) this.taskService.updateTask(id, { title: value }).subscribe();
   }
 
   onDescriptionChange(value: string) {
     const id = this.task()?.id;
-    if (id) this.taskService.updateTask(id, { description: value });
+    if (id) this.taskService.updateTask(id, { description: value }).subscribe();
   }
 
   onStatusChange(isCompleted: boolean) {
     const id = this.task()?.id;
     if (!id) return;
     if (isCompleted !== this.task()!.isCompleted) {
-      this.taskService.toggleComplete(id);
+      this.taskService.toggleComplete(id).subscribe();
     }
   }
 
   onPriorityChange(value: Priority) {
     const id = this.task()?.id;
-    if (id) this.taskService.updateTask(id, { priority: value });
+    if (id) this.taskService.updateTask(id, { priority: value }).subscribe();
   }
 
   onDueAtChange(value: string) {
     const id = this.task()?.id;
     if (!id) return;
-    this.taskService.updateTask(id, { dueAt: value ? new Date(value) : null });
+    this.taskService.updateTask(id, { dueAt: value ? new Date(value) : null }).subscribe();
   }
 
   toggleTag(tagId: string, isOn: boolean) {
@@ -89,7 +89,7 @@ export class TaskModal {
     const next = isOn
       ? Array.from(new Set([...t.tagIds, tagId]))
       : t.tagIds.filter((id) => id !== tagId);
-    this.taskService.updateTask(t.id, { tagIds: next });
+    this.taskService.updateTask(t.id, { tagIds: next }).subscribe();
   }
 
   isTagOn(tagId: string): boolean {
