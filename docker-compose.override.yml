@@ -1,4 +1,0 @@
-services:
-  auitodo:
-    ports:
-      - ${PORT}:${PORT}
