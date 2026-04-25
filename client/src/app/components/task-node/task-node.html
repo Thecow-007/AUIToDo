@@ -1,11 +1,19 @@
-<div class="task-node-container" [class.is-root]="isRoot">
-  
-  <div class="task-minimal glass-panel" (click)="onTaskClick($event)">
+<div
+  class="task-node-container"
+  [class.is-root]="isRoot"
+  [class.preview-create]="preview() === 'create'"
+  [class.preview-update]="preview() === 'update'"
+  [class.preview-delete]="preview() === 'delete'"
+>
+  <div class="task-minimal glass-panel" (click)="openModal($event)">
     <div class="minimal-left">
-      @if (task.subTasks && task.subTasks.length > 0) {
-        <button class="expand-toggle" [class.expanded]="isExpanded()" (click)="toggleExpand($event)">
-          ▶
-        </button>
+      @if (children().length > 0) {
+        <button
+          class="expand-toggle"
+          [class.expanded]="isExpanded()"
+          (click)="toggleExpand($event)"
+          aria-label="Toggle subtasks"
+        >▶</button>
       } @else {
         <div class="expand-placeholder"></div>
       }
@@ -15,27 +23,25 @@
       </label>
       <span class="task-title" [class.completed]="task.isCompleted">{{ task.title }}</span>
     </div>
-    
+
     <div class="minimal-right">
-      @if (task.dueDate) {
-        <span class="minimal-meta">📅 {{ task.dueDate }}</span>
+      @if (task.dueAt) {
+        <span class="minimal-meta">📅 {{ task.dueAt | date:'MMM d, h:mm a' }}</span>
       }
-      <span class="badge priority-{{ task.priority.toLowerCase() }}">{{ task.priority }}</span>
-      @if (task.subTasks && task.subTasks.length > 0) {
-        <span class="subtask-count">{{ task.subTasks.length }} subtasks</span>
+      <span class="badge priority-{{ task.priority }}">{{ task.priority }}</span>
+      @for (tag of tags(); track tag.id) {
+        <span class="tag-chip" [style.--tag-color]="tag.color">{{ tag.label }}</span>
+      }
+      @if (children().length > 0) {
+        <span class="subtask-count">{{ children().length }} subtasks</span>
       }
     </div>
   </div>
 
-  <!-- Recursive Subtasks -->
-  @if (isExpanded() && task.subTasks && task.subTasks.length > 0) {
+  @if (isExpanded() && children().length > 0) {
     <div class="sub-tasks-list">
-      @for (subtask of task.subTasks; track subtask.id) {
-        <app-task-node 
-          [task]="subtask" 
-          [depth]="depth + 1"
-          (taskClicked)="onChildTaskClick($event)">
-        </app-task-node>
+      @for (child of children(); track child.id) {
+        <app-task-node [task]="child" [depth]="depth + 1"></app-task-node>
       }
     </div>
   }

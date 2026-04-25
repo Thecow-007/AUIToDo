@@ -2,8 +2,15 @@
   <div class="brand">
     <h2>AUITodo</h2>
   </div>
-  
+
   <div class="user-actions">
+    <button class="bell-btn" title="Notifications">
+      <span class="bell-icon">🔔</span>
+      @if (unreadCount() > 0) {
+        <span class="unread-badge">{{ unreadCount() }}</span>
+      }
+    </button>
+
     <div class="user-profile">
       <div class="avatar user-avatar">U</div>
       <span class="username">Test User</span>

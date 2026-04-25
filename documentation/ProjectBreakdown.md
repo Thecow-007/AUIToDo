@@ -146,9 +146,10 @@ The chatbar lives **outside** `<router-outlet>` so it survives navigation — ch
 
 #### `/list` (default landing)
 - **Filter bar at the top** of the page: keyword, tag(s), status, due-date range. (No separate search route — search is a filter, applied per-page.)
-- Below: the global todo tree. Each row shows checkbox, title, priority badge, due date, tag chips. Click a row to expand its children inline; click again to collapse.
+- Below: the global todo tree. Each row is a **single-line summary**: checkbox, title, priority badge, due date, tag chips. Description is **not** shown on the row.
+- A chevron on rows that have children expands them inline; click the chevron again to collapse.
 - "+ New Todo" button at root level and inside each row (to create children).
-- Clicking the title opens an inline detail panel on the same row (description, edit, delete) — no modal, no route change.
+- Clicking anywhere else on the row opens a **task detail modal** with the full record (description, status, priority, due date, tags) for editing. The modal is mounted at the app root and stays in sync with the tree via `TaskService`.
 
 #### `/calendar`
 - The same filter bar at the top.

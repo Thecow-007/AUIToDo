@@ -4,8 +4,9 @@
   "description": "MEAN stack hackathon project",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "start": "npm --prefix client start",
+    "server": "node server/server.js",
+    "server:dev": "nodemon server/server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

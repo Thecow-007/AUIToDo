@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'app-header-bar',
@@ -6,4 +6,7 @@ import { Component } from '@angular/core';
   templateUrl: './header-bar.html',
   styleUrl: './header-bar.css',
 })
-export class HeaderBar {}
+export class HeaderBar {
+  // TODO: replace with NotificationsService — polls /api/notifications/unread-count every 30s (spec §7)
+  readonly unreadCount = signal(0);
+}

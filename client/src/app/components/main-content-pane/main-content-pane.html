@@ -1,6 +1,13 @@
 <div class="task-details">
-  <div class="breadcrumb">Home Projects &gt; <span>{{ rootTask.title }}</span></div>
-  <app-task-node [task]="rootTask" [isRoot]="true" [depth]="0" (taskClicked)="openModal($event)"></app-task-node>
+  <!-- TODO: replace placeholder with FilterBar component (keyword, tags, status, due range) -->
+  <div class="filter-bar-placeholder">Filter bar coming soon</div>
+
+  <div class="task-tree">
+    @for (rootId of taskService.rootTaskIds(); track rootId) {
+      @let root = taskService.getTask(rootId);
+      @if (root) {
+        <app-task-node [task]="root" [isRoot]="true" [depth]="0"></app-task-node>
+      }
+    }
+  </div>
 </div>
-
-

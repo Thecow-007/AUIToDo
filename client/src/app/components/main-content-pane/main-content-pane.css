@@ -2,15 +2,20 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: var(--spacing-md);
 }
 
-.breadcrumb {
-  font-size: 0.85rem;
+.filter-bar-placeholder {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
-.breadcrumb span {
-  color: var(--text-primary);
-  font-weight: 500;
+.task-tree {
+  flex-grow: 1;
+  overflow-y: auto;
 }

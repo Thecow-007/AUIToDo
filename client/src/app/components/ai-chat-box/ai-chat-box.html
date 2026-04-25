@@ -1,18 +1,42 @@
-<div class="chat-container">
-  <div class="message-history">
-    <div class="message ai-message">
-      <div class="avatar ai-avatar">✨</div>
-      <div class="content">Hello! How can I help you manage your tasks today? I noticed "Clean Garage" is due tomorrow.</div>
+<div class="chat-container" [class.expanded]="isExpanded()">
+  @if (isExpanded()) {
+    <div class="message-history">
+      @for (msg of messages(); track $index) {
+        @if (msg.kind === 'user') {
+          <div class="message user-message">
+            <div class="content">{{ msg.text }}</div>
+            <div class="avatar user-avatar">U</div>
+          </div>
+        } @else {
+          <div class="message ai-message">
+            <div class="avatar ai-avatar">✨</div>
+            <div class="ai-body">
+              @if (msg.trail && msg.trail.length > 0) {
+                <div class="search-trail" [class.collapsed]="msg.trailCollapsed">
+                  @for (step of msg.trail; track $index) {
+                    <div class="trail-step">› {{ step.label }}</div>
+                  }
+                </div>
+              }
+              @if (msg.text) {
+                <div class="content">{{ msg.text }}</div>
+              }
+            </div>
+          </div>
+        }
+      }
     </div>
-    <div class="message user-message">
-      <div class="content">Can you push the due date to this weekend?</div>
-      <div class="avatar user-avatar">U</div>
-    </div>
-  </div>
-  
-  <div class="chat-input-area">
-    <button class="voice-toggle" title="Voice Input">🎤</button>
-    <input type="text" placeholder="Ask AI to manage tasks..." />
-    <button class="send-btn">Send</button>
-  </div>
+  }
+
+  <form class="chat-input-area" (submit)="send(); $event.preventDefault()">
+    <input
+      type="text"
+      placeholder="Ask AI to manage tasks..."
+      [ngModel]="draft()"
+      (ngModelChange)="draft.set($event)"
+      (focus)="expand()"
+      name="chatInput"
+    />
+    <button type="submit" class="send-btn" [disabled]="!draft().trim()">Send</button>
+  </form>
 </div>

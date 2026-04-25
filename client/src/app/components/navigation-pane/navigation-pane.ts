@@ -1,5 +1,13 @@
 import { Component, signal } from '@angular/core';
 
+export type NavRoute = 'list' | 'calendar' | 'priority' | 'tags' | 'notifications';
+
+interface NavItem {
+  route: NavRoute;
+  icon: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-navigation-pane',
   imports: [],
@@ -7,9 +15,17 @@ import { Component, signal } from '@angular/core';
   styleUrl: './navigation-pane.css',
 })
 export class NavigationPane {
-  activeTab = signal<'search' | 'urgent' | 'calendar' | 'all'>('all');
+  // Active route — to be replaced by RouterLink/RouterLinkActive once router is wired
+  readonly activeRoute = signal<NavRoute>('list');
 
-  setActiveTab(tab: 'search' | 'urgent' | 'calendar' | 'all') {
-    this.activeTab.set(tab);
+  readonly navItems: NavItem[] = [
+    { route: 'list', icon: '⊕', label: 'List' },
+    { route: 'calendar', icon: '📅', label: 'Calendar' },
+    { route: 'priority', icon: '⚡', label: 'Priority' },
+    { route: 'tags', icon: '🏷', label: 'Tags' },
+  ];
+
+  setActive(route: NavRoute) {
+    this.activeRoute.set(route);
   }
 }

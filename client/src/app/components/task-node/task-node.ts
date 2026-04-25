@@ -1,44 +1,45 @@
-import { Component, Input, Output, EventEmitter, forwardRef, signal, OnInit } from '@angular/core';
+import { Component, Input, computed, forwardRef, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Task } from '../../models/task.model';
+import { TaskService } from '../../services/task.service';
+import { TaskModalService } from '../../services/task-modal.service';
 
 @Component({
   selector: 'app-task-node',
-  imports: [forwardRef(() => TaskNode)],
+  imports: [forwardRef(() => TaskNode), DatePipe],
   templateUrl: './task-node.html',
   styleUrl: './task-node.css',
 })
-export class TaskNode implements OnInit {
+export class TaskNode {
   @Input({ required: true }) task!: Task;
-  @Input() isRoot: boolean = false;
-  @Input() depth: number = 0;
+  @Input() isRoot = false;
+  @Input() depth = 0;
 
-  @Output() taskClicked = new EventEmitter<Task>();
+  private readonly taskService = inject(TaskService);
+  private readonly modal = inject(TaskModalService);
 
-  // Controls visibility of nested subtasks
-  isExpanded = signal<boolean>(false);
+  readonly isExpanded = signal(false);
+
+  readonly children = computed(() => this.taskService.getChildren(this.task.id));
+  readonly tags = computed(() => this.taskService.getTagsFor(this.task));
+  readonly preview = computed(() => this.taskService.getPreview(this.task.id));
 
   ngOnInit() {
-    if (this.isRoot) {
-      this.isExpanded.set(true);
-    }
+    if (this.isRoot) this.isExpanded.set(true);
   }
 
-  onTaskClick(event: Event) {
+  openModal(event: Event) {
     event.stopPropagation();
-    this.taskClicked.emit(this.task);
-  }
-
-  onChildTaskClick(task: Task) {
-    this.taskClicked.emit(task);
+    this.modal.open(this.task.id);
   }
 
   toggleExpand(event: Event) {
     event.stopPropagation();
-    this.isExpanded.set(!this.isExpanded());
+    this.isExpanded.update((v) => !v);
   }
 
   toggleCompletion(event: Event) {
     event.stopPropagation();
-    this.task.isCompleted = !this.task.isCompleted;
+    this.taskService.toggleComplete(this.task.id);
   }
 }

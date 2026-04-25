@@ -6,6 +6,9 @@
 .task-node-container {
   display: flex;
   flex-direction: column;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  transition: border-color 0.3s ease, background 0.3s ease;
 }
 
 .task-node-container:not(.is-root) {
@@ -15,7 +18,6 @@
   position: relative;
 }
 
-/* Connecting line for children */
 .task-node-container:not(.is-root)::before {
   content: '';
   position: absolute;
@@ -24,6 +26,17 @@
   width: var(--spacing-md);
   height: 2px;
   background-color: var(--border-color);
+}
+
+/* Preview-then-apply state — spec §4 */
+.task-node-container.preview-create > .task-minimal {
+  box-shadow: 0 0 0 2px var(--success);
+}
+.task-node-container.preview-update > .task-minimal {
+  box-shadow: 0 0 0 2px var(--warning);
+}
+.task-node-container.preview-delete > .task-minimal {
+  box-shadow: 0 0 0 2px var(--danger);
 }
 
 .task-minimal {
@@ -94,7 +107,7 @@
   height: 24px;
 }
 
-/* Checkbox Styles */
+/* Checkbox */
 .checkbox-wrapper {
   display: flex;
   align-items: center;
@@ -159,6 +172,16 @@
 .badge.priority-high { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
 .badge.priority-medium { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
 .badge.priority-low { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+
+/* Tag chips */
+.tag-chip {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tag-color) 20%, transparent);
+  color: var(--tag-color);
+  border: 1px solid color-mix(in srgb, var(--tag-color) 40%, transparent);
+}
 
 .subtask-count {
   font-size: 0.8rem;
