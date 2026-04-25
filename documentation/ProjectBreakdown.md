@@ -32,8 +32,8 @@ Manual UI controls (clicking, typing, dragging) are first-class — every featur
 | Auth         | Passport.js (`passport-local`) + `express-session` | Familiar to team; sessions stored in Mongo via `connect-mongo`. |
 | Deployment   | Docker + Docker Compose                   | Linux server target, Windows dev. |
 
-### Voice-to-text (future / stretch — not MVP)
-Approach TBD. Likely Web Speech API in the browser for STT (one line of JS, no backend cost) and TTS for AI responses. The chatbar UI reserves space for a microphone toggle. The team is researching this — do not design for it yet.
+### Voice (STT + TTS) — shipped
+Web Speech API in the browser. STT is push-to-talk (hold mic button), TTS speaks AI responses. `SpeechService` (`client/src/app/services/speech.service.ts`) owns both; `VoiceSettingsModal` exposes voice/rate/volume controls. No backend involvement.
 
 ---
 
@@ -124,50 +124,55 @@ The Angular app has a single top-level layout in `app.component.html`:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Top Bar: app name | 🔔 bell (unread count) | user menu  │
+│ Top Bar: brand | 🔔 bell | ✨ chat-toggle | user | Out  │
 ├──────────┬──────────────────────────────────────────────┤
+│          │  [🎚 Filters]                                 │
+│ Sidebar  │                                              │
+│ (tabs)   │           Main Content (task tree)           │
 │          │                                              │
-│ Sidebar  │              Main Content                    │
-│  (nav)   │           (Angular <router-outlet>)          │
-│          │                                              │
-│ ⊕ List   │                                              │
+│ 📂 All   │                                              │
 │ 📅 Cal   │                                              │
-│ ⚡ Prio  │                                              │
-│ 🏷 Tags  │                                              │
-│          │                                              │
+│ 🔥 Urg   │                                              │
+│ 🔍 Srch  │                                              │
 ├──────────┴──────────────────────────────────────────────┤
-│ AI Chatbar (persistent, expands upward when active)     │
+│ AI Chatbar (toggleable from header, resizable height)   │
 └─────────────────────────────────────────────────────────┘
 ```
 
-The chatbar lives **outside** `<router-outlet>` so it survives navigation — chat state, history, and pending operations are preserved across route changes. This is one of the main reasons Angular is worth using here vs. vanilla.
+The chatbar is rendered at the app shell level (outside the main content area) so chat state, history, and pending operations survive navigation between sidebar tabs. The header's ✨ chat-toggle hides/shows the panel without destroying its state.
 
-### Routes / Pages
+The sidebar uses **tabs** with placeholder body content for now (signal-based active tab — `NavigationPane.activeTab`). Routing via `@angular/router` is not yet wired; see `documentation/TODO.md` §2.
 
-#### `/list` (default landing)
-- **Empty-state onboarding.** First-time users (no todos yet) see a hero that highlights the chatbar with 3–4 click-to-fire example prompts (e.g. *"Add Assignment 2 due Friday with subtasks intro, body, conclusion"*) and a "+ New Todo" button for manual creation. Once any todo exists, the empty state is replaced by the tree.
-- **Filter bar at the top** of the page: keyword, tag(s), status, due-date range. (No separate search route — search is a filter, applied per-page.)
+### Tabs / Pages
+
+#### `All` tab (default landing)
+- **Empty-state onboarding.** First-time users (no todos yet) see a hero that highlights the chatbar with 3–4 click-to-fire example prompts (e.g. *"Add Assignment 2 due Friday with subtasks intro, body, conclusion"*) and a "+ New Todo" button for manual creation. Once any todo exists, the empty state is replaced by the tree. **Not yet implemented.**
+- **Filters button** at the top: priority multi-select + due-date preset (Today / This week / Overdue / Any). Active filters drive the `GET /api/todos` query. Keyword and tag filters still TODO.
 - Below: the global todo tree. Each row is a **single-line summary**: checkbox, title, priority badge, due date, tag chips. Description is **not** shown on the row.
 - A chevron on rows that have children expands them inline; click the chevron again to collapse.
 - "+ New Todo" button at root level and inside each row (to create children).
-- **Drag-and-drop reordering and reparenting.** Dragging a row onto another row reparents it as a child; dragging up/down within a parent reorders siblings. Sibling order is the parent's `childIds` array order — mutating that array is the persistence model. A `PATCH /api/todos/:id/move` endpoint atomically updates the moved todo's `parentId` and the old/new parent's `childIds`. Drop targets show a visual hint (insertion line for sibling-reorder, highlight for child-drop). Move actions are undoable.
+- **Drag-and-drop reparenting** — dragging a row onto another row reparents it as a child. The reparent goes through `PATCH /api/todos/:id` with `{parentId}`; the server walks the new parent's chain and rejects cycles (`parent_circular`, `parent_self`, `parent_not_found`) and updates both old and new parents' `childIds` atomically. Sibling reordering within a parent is **not yet implemented** — `childIds` order is currently determined by insertion order on the server.
 - Clicking anywhere else on the row opens a **task detail modal** with the full record (description, status, priority, due date, tags) for editing. The modal is mounted at the app root and stays in sync with the tree via `TaskService`.
 - **Markdown in descriptions.** The description field is markdown — rendered for display in the modal, plain textarea for editing with a Preview tab. Render with a small allowlist (headings, lists, links, code, bold/italic) — no raw HTML passthrough.
 
-#### `/calendar`
-- The same filter bar at the top.
+#### `Calendar` tab
 - A month-grid calendar with dots on dates that have due todos. Clicking a date filters the list below to that day.
-- Below the calendar: a chronologically-sorted list of upcoming todos (respecting the active filter).
+- Below the calendar: a chronologically-sorted list of upcoming todos.
+- **Not yet implemented** — currently a placeholder. See `documentation/TODO.md` §1.
 
-#### `/priority`
-- The same filter bar at the top.
-- Todos grouped into sections: Urgent → High → Medium → Low. Within each group, sorted by due date ascending.
+#### `Urgent` tab
+- Quick-access filter for high-priority work that's overdue or due soon. Effectively a curated saved filter.
+- **Currently a static placeholder.** A real implementation is a thin wrapper over the same `taskService.refresh({priority, dueTo})` machinery the Filters button uses on the All tab.
 
-#### `/tags`
-- Tag CRUD. Click a tag to see all todos using it.
+#### `Search` tab
+- Keyword input that drives `GET /api/todos?q=`. Backend supports it via Mongo `$text`.
+- **Currently a static placeholder** with an unwired input.
 
-#### `/notifications`
+> **Note on dropped pages.** Earlier drafts of this doc included separate `/priority` and per-tag pages. Those have been collapsed into filters on the main view (see Filters button). Tag CRUD lives in the AI chat for now (`add_tag_to_todo` / `remove_tag_from_todo`).
+
+#### Notifications (deferred — stretch)
 - Full paginated list. Filters: read/unread, type. Click an item to navigate to the related todo.
+- Bell in the header is currently hardcoded to 0; lights up once the `Notification` model + `/api/notifications/*` lands.
 
 ### AI chatbar component
 
@@ -345,8 +350,9 @@ GET    /api/todos                  # query: parentId, tag, status, dueFrom, dueT
 GET    /api/todos/:id
 GET    /api/todos/:id/children
 POST   /api/todos
-PATCH  /api/todos/:id              # response: { before, after } (changed fields only) — supports undo
-PATCH  /api/todos/:id/move         # body: { newParentId, newIndex }; response: { before, after } parent linkage for undo
+PATCH  /api/todos/:id              # patchable: title, description, priority, dueAt, tagIds, parentId
+                                   # parentId change runs server-side circular-ref check + childIds maintenance
+                                   # response: { before, after } (changed fields only) — supports undo
 DELETE /api/todos/:id              # response: full subtree snapshot — supports undo restore
 POST   /api/todos/:id/complete     # handles cascade; response: list of {todoId, prevIsCompleted, prevCompletedAt}
 POST   /api/todos/restore          # body: subtree snapshot from a prior DELETE; recreates with original _ids
@@ -386,11 +392,17 @@ POST   /api/ai/ghost-preview       # body: { partialMessage, currentView }
 - Undo (Ctrl+Z + post-action toast) for all mutating actions — manual and AI
 
 ### Stretch (if time permits)
-- Vector search in the locate phase
+- Vector search in the locate phase (backend supports it; needs the Atlas index created in the cluster's Search tab — see §5)
 - Recurring todos
 - Notifications + reminders
-- Voice-to-text in the chatbar (Web Speech API)
 - Server-Sent Events for live notification delivery
+- Sibling reordering on drag-drop (currently only reparenting works)
+
+### Already shipped beyond MVP
+- Voice STT/TTS in the chatbar (Web Speech API — see §2)
+- Drag-drop reparenting with server-side circular-ref check
+- Markdown-rendered descriptions with edit/preview toggle
+- Per-field AI diff highlighting (`changeType` + `fieldChanges[]` on Task)
 
 ---
 
