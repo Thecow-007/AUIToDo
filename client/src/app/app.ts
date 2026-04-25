@@ -4,18 +4,21 @@ import { MainContentPane } from './components/main-content-pane/main-content-pan
 import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
 import { HeaderBar } from './components/header-bar/header-bar';
 import { TaskModal } from './components/task-modal/task-modal';
+import { VoiceSettingsModal } from './components/voice-settings-modal/voice-settings-modal';
 import { TaskModalService } from './services/task-modal.service';
 import { ChatPanelService } from './services/chat-panel.service';
+import { SpeechService } from './services/speech.service';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal],
+  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
   modalService = inject(TaskModalService);
   chatPanel = inject(ChatPanelService);
+  speechService = inject(SpeechService);
   protected readonly title = signal('client');
 
   private isResizing = false;

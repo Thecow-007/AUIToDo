@@ -24,3 +24,7 @@
 @if (modalService.selectedTask()) {
   <app-task-modal [task]="modalService.selectedTask()!" (close)="modalService.closeModal()"></app-task-modal>
 }
+
+@if (speechService.isSettingsOpen()) {
+  <app-voice-settings-modal (close)="speechService.isSettingsOpen.set(false)" />
+}
