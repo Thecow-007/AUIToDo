@@ -1,0 +1,89 @@
+<div class="calendar-page">
+  <div class="calendar-toolbar">
+    <button class="cal-nav-btn" (click)="prevMonth()" aria-label="Previous month">‹</button>
+    <h2 class="cal-month-label">{{ monthLabel() }}</h2>
+    <button class="cal-nav-btn" (click)="nextMonth()" aria-label="Next month">›</button>
+    <button class="cal-today-btn" (click)="goToToday()">Today</button>
+    @if (selectedIso()) {
+      <button class="cal-clear-btn" (click)="clearSelection()">Clear day</button>
+    }
+  </div>
+
+  <div class="calendar-grid glass-panel">
+    <div class="cal-weekdays">
+      @for (label of weekdayLabels; track label) {
+        <div class="cal-weekday">{{ label }}</div>
+      }
+    </div>
+    <div class="cal-days">
+      @for (cell of cells(); track cell.iso) {
+        <button
+          type="button"
+          class="cal-day"
+          [class.out-of-month]="!cell.inMonth"
+          [class.is-today]="cell.isToday"
+          [class.is-selected]="selectedIso() === cell.iso"
+          [class.has-tasks]="cell.dueCount > 0"
+          (click)="selectDay(cell)"
+        >
+          <span class="cal-day-num">{{ cell.date.getDate() }}</span>
+          @if (cell.dueCount > 0) {
+            <span class="cal-day-dots" [attr.title]="cell.dueCount + ' task(s) due'">
+              @for (i of visibleDotCount(cell); track i) {
+                <span class="cal-dot"></span>
+              }
+              @if (cell.dueCount > 3) {
+                <span class="cal-dot-more">+{{ cell.dueCount - 3 }}</span>
+              }
+            </span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="upcoming-section">
+    <h3 class="upcoming-heading">{{ listHeading() }}</h3>
+    @if (listedTasks().length === 0) {
+      <div class="upcoming-empty">
+        @if (selectedIso()) {
+          No tasks due on this day.
+        } @else {
+          No upcoming tasks.
+        }
+      </div>
+    } @else {
+      <ul class="upcoming-list">
+        @for (task of listedTasks(); track task.id) {
+          <li
+            class="upcoming-row glass-panel"
+            [ngClass]="'priority-row-' + task.priority"
+            [class.completed]="task.isCompleted"
+            (click)="openTask(task)"
+          >
+            <label class="upcoming-checkbox" (click)="$event.stopPropagation()">
+              <input
+                type="checkbox"
+                [checked]="task.isCompleted"
+                (change)="toggleComplete(task, $event)"
+              />
+              <span class="upcoming-checkmark"></span>
+            </label>
+            <div class="upcoming-main">
+              <div class="upcoming-title" [class.done]="task.isCompleted">{{ task.title }}</div>
+              <div class="upcoming-meta">
+                @if (task.dueAt) {
+                  <span class="upcoming-due">📅 {{ task.dueAt | date:'MMM d, h:mm a' }}</span>
+                }
+                <span class="badge priority-{{ task.priority }}">{{ task.priority | uppercase }}</span>
+                @for (tag of tagsFor(task); track tag.id) {
+                  <span class="tag-chip" [style.--tag-color]="tag.color">{{ tag.label }}</span>
+                }
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

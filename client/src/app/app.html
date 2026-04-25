@@ -8,7 +8,14 @@
   </aside>
 
   <section class="pane-main glass-panel">
-    <app-main-content-pane></app-main-content-pane>
+    @switch (pageService.activePage()) {
+      @case ('calendar') {
+        <app-calendar-page></app-calendar-page>
+      }
+      @default {
+        <app-main-content-pane></app-main-content-pane>
+      }
+    }
   </section>
 
   @if (chatPanel.isVisible()) {
