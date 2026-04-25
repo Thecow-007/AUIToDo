@@ -1,0 +1,29 @@
+services:
+  auitodo:
+    build: .
+    container_name: auitodo-container
+    restart: always
+    environment:
+      - PORT=${PORT}
+      - MONGODB_URI=mongodb://auitodo-mongo:27017/${DB_NAME}
+      - NODE_ENV=production
+    networks:
+      - web-main-net
+    depends_on:
+      - auitodo-mongo
+
+  auitodo-mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - auitodo_mongo_data:/data/db
+    expose:
+      - "27017"
+    networks: [ web-main-net ]
+
+volumes:
+  auitodo_mongo_data: {}
+
+networks:
+  web-main-net:
+    external: true
