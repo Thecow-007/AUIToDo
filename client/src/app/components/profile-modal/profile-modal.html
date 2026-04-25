@@ -1,0 +1,41 @@
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="settings-panel glass-panel" (click)="stopPropagation($event)">
+    <div class="settings-header">
+      <h3>👤 Profile Settings</h3>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="settings-body">
+      <div class="profile-preview">
+        <div class="large-avatar">{{ profileService.currentUser().initials }}</div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="profileName">Full Name</label>
+        <input 
+          id="profileName"
+          type="text" 
+          class="form-input" 
+          [(ngModel)]="editName" 
+          placeholder="Enter your name" 
+        />
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="profileEmail">Email Address</label>
+        <input 
+          id="profileEmail"
+          type="email" 
+          class="form-input" 
+          [(ngModel)]="editEmail" 
+          placeholder="Enter your email" 
+        />
+      </div>
+    </div>
+
+    <div class="settings-footer">
+      <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveProfile()" [disabled]="!editName.trim() || !editEmail.trim()">Save Changes</button>
+    </div>
+  </div>
+</div>

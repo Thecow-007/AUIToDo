@@ -14,49 +14,10 @@
       <span class="icon">📅</span>
       <span class="tooltip">Calendar</span>
     </button>
-    <button 
-      class="nav-tab" 
-      [class.active]="activeTab() === 'urgent'"
-      (click)="setActiveTab('urgent')">
-      <span class="icon">🔥</span>
-      <span class="tooltip">Urgent View</span>
-    </button>
-    <button 
-      class="nav-tab" 
-      [class.active]="activeTab() === 'search'"
-      (click)="setActiveTab('search')">
-      <span class="icon">🔍</span>
-      <span class="tooltip">Search</span>
-    </button>
   </div>
 </div>
 
 <div class="nav-content">
-  @if (activeTab() === 'search') {
-    <div class="nav-section">
-      <div class="search-bar">
-        <input type="text" placeholder="Search tasks by keyword..." autofocus />
-      </div>
-      <div class="empty-state">
-        <p>Enter a query to find tasks.</p>
-      </div>
-    </div>
-  }
-
-  @if (activeTab() === 'urgent') {
-    <div class="nav-section">
-      <h3>Do This Now</h3>
-      <ul>
-        <li class="urgent-item">
-          <div class="task-info">
-            <span class="task-name">Finish UI Design</span>
-            <span class="badge danger">Urgent</span>
-          </div>
-        </li>
-      </ul>
-    </div>
-  }
-
   @if (activeTab() === 'calendar') {
     <div class="nav-section">
       <h3>Upcoming</h3>

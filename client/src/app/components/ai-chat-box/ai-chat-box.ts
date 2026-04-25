@@ -1,6 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SpeechService } from '../../services/speech.service';
+import { ChatPanelService } from '../../services/chat-panel.service';
+import { VoiceSettingsModal } from '../voice-settings-modal/voice-settings-modal';
 import { AiChatService } from '../../services/ai-chat.service';
 
 export interface TrailStep {
@@ -26,6 +28,7 @@ export interface ChatMessage {
 })
 export class AiChatBox {
   speechService = inject(SpeechService);
+  chatPanel = inject(ChatPanelService);
   private aiChat = inject(AiChatService);
 
   inputText = '';
@@ -37,7 +40,10 @@ export class AiChatBox {
     this.speechService.startListening();
   }
 
+  @HostListener('document:mouseup')
   onMicUp(): void {
+    if (!this.speechService.isListening()) return;
+    
     const transcript = this.speechService.stopListening();
     if (transcript) {
       this.sendMessage(transcript, true);

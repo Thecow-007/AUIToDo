@@ -5,21 +5,26 @@ import { AiChatBox } from './components/ai-chat-box/ai-chat-box';
 import { HeaderBar } from './components/header-bar/header-bar';
 import { TaskModal } from './components/task-modal/task-modal';
 import { VoiceSettingsModal } from './components/voice-settings-modal/voice-settings-modal';
+import { ProfileModal } from './components/profile-modal/profile-modal';
 import { LoginScreen } from './components/login-screen/login-screen';
+import { TaskModalService } from './services/task-modal.service';
 import { ChatPanelService } from './services/chat-panel.service';
 import { SpeechService } from './services/speech.service';
+import { ProfileService } from './services/profile.service';
 import { AuthService } from './services/auth.service';
 import { TaskService } from './services/task.service';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal, LoginScreen],
+  imports: [HeaderBar, NavigationPane, MainContentPane, AiChatBox, TaskModal, VoiceSettingsModal, ProfileModal, LoginScreen],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App implements OnInit {
+  modalService = inject(TaskModalService);
   chatPanel = inject(ChatPanelService);
   speechService = inject(SpeechService);
+  profileService = inject(ProfileService);
   auth = inject(AuthService);
   private tasks = inject(TaskService);
   protected readonly title = signal('client');
