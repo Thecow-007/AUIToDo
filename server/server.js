@@ -1,20 +1,12 @@
-const express = require('express');
-const path = require('path');
-require('dotenv').config();
+// Runtime entry point: connects to Mongo, then binds the Express app to a port.
+// Tests bypass this file and import `./app` directly with their own DB lifecycle.
 
-const helloRoutes = require('./routes/helloRoutes');
+const env = require('./config/env');
 const connectDB = require('./config/db');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app = require('./app');
 
 connectDB();
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-app.use('/api', helloRoutes);
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`Server running on http://localhost:${env.PORT}`);
 });

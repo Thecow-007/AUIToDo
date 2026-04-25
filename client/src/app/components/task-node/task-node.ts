@@ -1,27 +1,36 @@
-import { Component, Input, Output, EventEmitter, forwardRef, signal, inject } from '@angular/core';
-import { NgClass, UpperCasePipe } from '@angular/common';
-import { Task, ChangeType } from '../../models/task.model';
+import { Component, Input, computed, forwardRef, inject, signal, OnInit } from '@angular/core';
+import { DatePipe, NgClass, UpperCasePipe } from '@angular/common';
+import { Task } from '../../models/task.model';
+import { TaskService } from '../../services/task.service';
+import { TaskModalService } from '../../services/task-modal.service';
 import { DragDropService } from '../../services/drag-drop.service';
 
 @Component({
   selector: 'app-task-node',
-  imports: [NgClass, UpperCasePipe, forwardRef(() => TaskNode)],
+  imports: [forwardRef(() => TaskNode), DatePipe, NgClass, UpperCasePipe],
   templateUrl: './task-node.html',
   styleUrl: './task-node.css',
 })
-export class TaskNode {
+export class TaskNode implements OnInit {
   @Input({ required: true }) task!: Task;
   @Input() parentTask: Task | null = null;
-  @Input() isRoot: boolean = false;
-  @Input() depth: number = 0;
+  @Input() isRoot = false;
+  @Input() depth = 0;
 
-  @Output() taskClicked = new EventEmitter<Task>();
-
+  private readonly taskService = inject(TaskService);
+  private readonly modal = inject(TaskModalService);
   dragDrop = inject(DragDropService);
 
-  // Controls visibility of nested subtasks
-  isExpanded = signal<boolean>(true);
-  isDragOver = signal<boolean>(false);
+  readonly isExpanded = signal(false);
+  readonly isDragOver = signal<boolean>(false);
+
+  readonly children = computed(() => this.taskService.getChildren(this.task.id));
+  readonly tags = computed(() => this.taskService.getTagsFor(this.task));
+  readonly preview = computed(() => this.taskService.getPreview(this.task.id));
+
+  ngOnInit() {
+    if (this.isRoot) this.isExpanded.set(true);
+  }
 
   get changeClass(): string {
     if (!this.task.changeType || this.task.changeType === 'none') return '';
@@ -29,17 +38,17 @@ export class TaskNode {
   }
 
   hasFieldChange(field: string): boolean {
-    return !!this.task.fieldChanges?.some(fc => fc.field === field);
+    return !!this.task.fieldChanges?.some((fc) => fc.field === field);
   }
 
   getFieldChangeClass(field: string): string {
-    const fc = this.task.fieldChanges?.find(f => f.field === field);
+    const fc = this.task.fieldChanges?.find((f) => f.field === field);
     if (!fc) return '';
     return 'field-change-' + fc.type;
   }
 
   getFieldOldValue(field: string): string | undefined {
-    return this.task.fieldChanges?.find(f => f.field === field)?.oldValue;
+    return this.task.fieldChanges?.find((f) => f.field === field)?.oldValue;
   }
 
   // --- Drag & Drop ---
@@ -53,7 +62,7 @@ export class TaskNode {
     this.dragDrop.startDrag(this.task, this.parentTask);
   }
 
-  onDragEnd(event: DragEvent) {
+  onDragEnd(_event: DragEvent) {
     this.dragDrop.endDrag();
   }
 
@@ -63,14 +72,12 @@ export class TaskNode {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-
     const dragged = this.dragDrop.draggedTask();
     if (!dragged || dragged.id === this.task.id) return;
-
     this.isDragOver.set(true);
   }
 
-  onDragLeave(event: DragEvent) {
+  onDragLeave(_event: DragEvent) {
     this.isDragOver.set(false);
   }
 
@@ -78,28 +85,23 @@ export class TaskNode {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver.set(false);
-
     this.dragDrop.moveTask(this.task);
   }
 
-  // --- Existing interactions ---
+  // --- Click / interactions ---
 
-  onTaskClick(event: Event) {
+  openModal(event: Event) {
     event.stopPropagation();
-    this.taskClicked.emit(this.task);
-  }
-
-  onChildTaskClick(task: Task) {
-    this.taskClicked.emit(task);
+    this.modal.open(this.task.id);
   }
 
   toggleExpand(event: Event) {
     event.stopPropagation();
-    this.isExpanded.set(!this.isExpanded());
+    this.isExpanded.update((v) => !v);
   }
 
   toggleCompletion(event: Event) {
     event.stopPropagation();
-    this.task.isCompleted = !this.task.isCompleted;
+    this.taskService.toggleComplete(this.task.id);
   }
 }

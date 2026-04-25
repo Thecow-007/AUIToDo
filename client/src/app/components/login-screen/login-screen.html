@@ -1,0 +1,28 @@
+<div class="login-overlay">
+  <form class="login-card glass-panel" (submit)="submit(); $event.preventDefault()">
+    <h2>{{ mode() === 'login' ? 'Sign in' : 'Create an account' }}</h2>
+    <p class="hint">AUIToDo · MEAN Programmers</p>
+
+    <label>
+      <span>Email</span>
+      <input type="email" name="email" autocomplete="email" [(ngModel)]="email" required />
+    </label>
+
+    <label>
+      <span>Password</span>
+      <input type="password" name="password" autocomplete="current-password" [(ngModel)]="password" required />
+    </label>
+
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+
+    <button type="submit" class="primary-btn" [disabled]="busy()">
+      {{ busy() ? '…' : (mode() === 'login' ? 'Sign in' : 'Create account') }}
+    </button>
+
+    <button type="button" class="link-btn" (click)="toggleMode()">
+      {{ mode() === 'login' ? 'Need an account? Register' : 'Have an account? Sign in' }}
+    </button>
+  </form>
+</div>

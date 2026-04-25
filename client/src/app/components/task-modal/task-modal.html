@@ -1,63 +1,93 @@
-<div class="modal-backdrop" (click)="closeModal()">
-  <div class="modal-content glass-panel" (click)="stopPropagation($event)">
-    <div class="modal-header">
-      <input type="text" class="task-title-input" [(ngModel)]="task.title" placeholder="Task Title" />
-      <button class="close-btn" (click)="closeModal()">×</button>
-    </div>
+@if (task(); as t) {
+  <div class="modal-backdrop" (click)="onBackdropClick()">
+    <div class="modal-content glass-panel" (click)="stopPropagation($event)">
+      <div class="modal-header">
+        <input
+          type="text"
+          class="task-title-input"
+          [ngModel]="t.title"
+          (ngModelChange)="onTitleChange($event)"
+          placeholder="Task title"
+        />
+        <button class="close-btn" (click)="close()" aria-label="Close">×</button>
+      </div>
 
-    <div class="modal-body">
-      <div class="task-meta">
-        <div class="meta-item">
-          <strong>Status</strong>
-          <select [(ngModel)]="task.isCompleted" class="meta-select">
-            <option [ngValue]="false">In Progress</option>
-            <option [ngValue]="true">Completed</option>
-          </select>
+      <div class="modal-body">
+        <div class="meta-grid">
+          <div class="meta-item">
+            <label>Status</label>
+            <select
+              [ngModel]="t.isCompleted"
+              (ngModelChange)="onStatusChange($event)"
+            >
+              <option [ngValue]="false">In progress</option>
+              <option [ngValue]="true">Completed</option>
+            </select>
+          </div>
+          <div class="meta-item">
+            <label>Priority</label>
+            <select
+              [ngModel]="t.priority"
+              (ngModelChange)="onPriorityChange($event)"
+            >
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+          <div class="meta-item">
+            <label>Due</label>
+            <input
+              type="datetime-local"
+              [ngModel]="dueAtInputValue()"
+              (ngModelChange)="onDueAtChange($event)"
+            />
+          </div>
         </div>
-        <div class="meta-item">
-          <strong>Priority</strong>
-          <select [(ngModel)]="task.priority" class="meta-select">
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Urgent">Urgent</option>
-          </select>
+
+        <div class="section">
+          <div class="description-header">
+            <label class="section-label">Description</label>
+            <button class="preview-toggle" (click)="togglePreview()">
+              {{ isPreview() ? '✏️ Edit' : '👁️ Preview' }}
+            </button>
+          </div>
+          @if (isPreview()) {
+            <div class="markdown-preview" [innerHTML]="t.description | markdown"></div>
+          } @else {
+            <textarea
+              [ngModel]="t.description"
+              (ngModelChange)="onDescriptionChange($event)"
+              placeholder="Write your description in **markdown**..."
+              rows="5"
+            ></textarea>
+          }
         </div>
-        <div class="meta-item">
-          <strong>Due Date</strong>
-          <input type="text" [(ngModel)]="task.dueDate" class="meta-input" placeholder="e.g. Tomorrow, 5:00 PM" />
-        </div>
-        <div class="meta-item">
-          <strong>Estimated</strong>
-          <input type="text" [(ngModel)]="task.estimatedDuration" class="meta-input" placeholder="e.g. 2 hrs" />
-        </div>
-        <div class="meta-item">
-          <strong>Energy</strong>
-          <select [(ngModel)]="task.energyLevel" class="meta-select">
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
+
+        <div class="section">
+          <label class="section-label">Tags</label>
+          @if (availableTags().length === 0) {
+            <div class="empty-tags">No tags yet — create tags via the AI chat or backend.</div>
+          } @else {
+            <div class="tag-list">
+              @for (tag of availableTags(); track tag.id) {
+                <label class="tag-toggle" [style.--tag-color]="tag.color">
+                  <input
+                    type="checkbox"
+                    [checked]="isTagOn(tag.id)"
+                    (change)="toggleTag(tag.id, $any($event.target).checked)"
+                  />
+                  <span class="tag-label">{{ tag.label }}</span>
+                </label>
+              }
+            </div>
+          }
         </div>
       </div>
 
-      <div class="task-description">
-        <div class="description-header">
-          <h3>Description</h3>
-          <button class="preview-toggle" (click)="togglePreview()">
-            {{ isPreview() ? '✏️ Edit' : '👁️ Preview' }}
-          </button>
-        </div>
-        @if (isPreview()) {
-          <div class="markdown-preview" [innerHTML]="task.description | markdown"></div>
-        } @else {
-          <textarea [(ngModel)]="task.description" placeholder="Write your description in **markdown**..."></textarea>
-        }
+      <div class="modal-footer">
+        <button class="primary-btn" (click)="close()">Done</button>
       </div>
-    </div>
-    
-    <div class="modal-footer">
-      <button class="save-btn" (click)="closeModal()">Done</button>
     </div>
   </div>
-</div>
+}
