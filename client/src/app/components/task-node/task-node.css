@@ -45,6 +45,9 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .minimal-right {
@@ -53,11 +56,16 @@
   gap: var(--spacing-md);
   font-size: 0.85rem;
   color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: var(--spacing-md);
 }
 
 .task-title {
   font-weight: 500;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-title.completed {
@@ -153,6 +161,8 @@
   border-radius: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  min-width: 60px;
+  text-align: center;
 }
 
 .badge.priority-urgent { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
@@ -170,4 +180,147 @@
 
 .sub-tasks-list {
   margin-top: var(--spacing-sm);
+}
+
+/* ===== LIVE PREVIEW CHANGE HIGHLIGHTING ===== */
+
+/* Task-level background tints */
+.task-minimal.change-add {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.2);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.task-minimal.change-update {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.2);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.task-minimal.change-delete {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.2);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.task-minimal.change-delete .task-title,
+.task-minimal.change-delete .minimal-meta,
+.task-minimal.change-delete .badge {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Field-level change indicators */
+.field-change-add {
+  position: relative;
+  background: rgba(34, 197, 94, 0.15);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.field-change-update {
+  position: relative;
+  background: rgba(234, 179, 8, 0.15);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.field-change-delete {
+  position: relative;
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Old value display (strikethrough before new value) */
+.old-value {
+  text-decoration: line-through;
+  opacity: 0.5;
+  margin-right: var(--spacing-xs);
+  font-size: 0.85em;
+}
+
+/* Change type label */
+.change-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
+}
+
+.change-add .change-label {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.change-update .change-label {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde68a;
+}
+
+.change-delete .change-label {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+/* Connecting line color overrides for changed tasks */
+.task-node-container:not(.is-root):has(> .change-add) {
+  border-left-color: rgba(34, 197, 94, 0.4);
+}
+
+.task-node-container:not(.is-root):has(> .change-update) {
+  border-left-color: rgba(234, 179, 8, 0.4);
+}
+
+.task-node-container:not(.is-root):has(> .change-delete) {
+  border-left-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Select — cyan/blue focus ring */
+.task-minimal.change-select {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.25), 0 0 12px rgba(6, 182, 212, 0.15);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.change-select .change-label {
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+}
+
+.task-node-container:not(.is-root):has(> .change-select) {
+  border-left-color: rgba(6, 182, 212, 0.4);
+}
+
+/* Toggle — purple with checkbox highlight */
+.task-minimal.change-toggle {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.2);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.task-minimal.change-toggle .checkmark {
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+  border-color: rgba(168, 85, 247, 0.8);
+}
+
+.change-toggle .change-label {
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+}
+
+.task-node-container:not(.is-root):has(> .change-toggle) {
+  border-left-color: rgba(168, 85, 247, 0.4);
 }
