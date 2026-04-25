@@ -6,7 +6,15 @@ services:
     environment:
       - PORT=${PORT}
       - MONGODB_URI=mongodb://auitodo-mongo:27017/${DB_NAME}
+      - DB_NAME=${DB_NAME}
       - NODE_ENV=production
+      - SESSION_SECRET=${SESSION_SECRET}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - CEREBRAS_BASE_URL=${CEREBRAS_BASE_URL}
+      - CEREBRAS_MODEL=${CEREBRAS_MODEL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
+      - VECTOR_INDEX_NAME=${VECTOR_INDEX_NAME}
     networks:
       - web-main-net
     depends_on:
