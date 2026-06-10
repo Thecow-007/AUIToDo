@@ -16,7 +16,7 @@ services:
       - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
       - VECTOR_INDEX_NAME=${VECTOR_INDEX_NAME}
     networks:
-      - web-main-net
+      - aui-todo-net
     depends_on:
       - auitodo-mongo
 
