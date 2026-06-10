@@ -27,11 +27,11 @@ services:
       - auitodo_mongo_data:/data/db
     expose:
       - "27017"
-    networks: [ web-main-net ]
+    networks: [ aui-todo-net ]
 
 volumes:
   auitodo_mongo_data: {}
 
 networks:
-  web-main-net:
+  aui-todo-net:
     external: true
